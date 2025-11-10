@@ -1,1 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Focus Timer + Quick Tasks</title>
+<style>
+  :root {
+    --bg1: #0f1222;
+    --bg2: #1b1f38;
+    --fg: #eef1ff;
+    --muted: #a9b1d6;
+    --accent: #7c5cff;
+    --accent-2: #33d6a6;
+    --danger: #ff6b6b;
+    --shadow: 0 10px 30px rgba(0,0,0,.35);
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100svh;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    color: var(--fg);
+    background: radial-gradient(1200px 800px at 10% 10%, #1d2040 0%, var(--bg1) 35%), linear-gradient(160deg, var(--bg2), #0e1020);
+    display: grid;
+    place-items: center;
+    padding: 24px;
+  }
+  .app {
+    width: 100%;
+    max-width: 900px;
+    display: grid;
+    gap: 18px;
+  }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+  }
+  .title {
+    font-weight: 700; letter-spacing: .4px; font-size: clamp(20px, 4vw, 28px);
+  }
+  .sub { color: var(--muted); font-size: 14px; }
+  .card {
+    background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px;
+  }
+  .timer {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
+  }
+  @media (max-width: 800px) { .timer { grid-template-columns: 1fr; } }
+  .ringWrap { display: grid; place-items: center; padding: 12px; }
+  .time {
+    position: absolute; font-weight: 800; font-size: clamp(36px, 10vw, 64px);
+    letter-spacing: .5px;
+  }
+  .controls, .presets {
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  }
+  button, .chip {
+    background: #23284a; color: var(--fg);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 12px; padding: 10px 14px;
+    cursor: pointer; font-weight: 600; letter-spacing: .2px;
+    transition: transform .08s ease, background .2s ease, border-color .2s ease;
+  }
+  button:hover, .chip:hover { transform: translateY(-1px); }
+  button.primary { background: var(--accent); border-color: transparent; }
+  button.ghost { background: transparent; }
+  button.danger { background: var(--danger); border-color: transparent; }
+  .presets .chip.active { background: var(--accent-2); border-color: transparent; color: #0b1321; }
+  .grid {
+    display: grid; grid-template-columns: 2fr 1.4fr; gap: 18px;
+  }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  .taskRow {
+    display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 8px;
+  }
+  input[type="text"], input[type="number"] {
+    width: 100%; padding: 12px 14px; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.12); background: #151935; color: var(--fg);
+  }
+  .taskItem {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px;
+    background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08);
+  }
+  .taskItem.done { opacity: .6; text-decoration: line-through; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 8px;}
+  .link { color: var(--accent-2); text-decoration: none; border-bottom: 1px dashed rgba(51,214,166,.6); }
+  .tog { display: inline-flex; align-items: center; gap: 8px; }
+  .small { font-size: 12px; }
+  .spacer { flex: 1; }
+  .warn { color: #ffd479; }
+  .checkbox { width: 18px; height: 18px; }
+  .sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+</style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <div class="title">Focus Timer + Quick Tasks</div>
+        <div class="sub">A no-login, one-page productivity tool. Your data saves in your browser.</div>
+      </div>
+      <div class="tog">
+        <input id="soundToggle" type="checkbox" />
+        <label for="soundToggle" class="small">Chime on session end</label>
+      </div>
+    </header>
+
+    <section class="card timer">
+      <div class="ringWrap">
+        <svg width="260" height="260" viewBox="0 0 120 120" style="position: relative;">
+          <circle cx="60" cy="60" r="52" stroke="rgba(255,255,255,.12)" stroke-width="8" fill="none"/>
+          <circle id="progress" cx="60" cy="60" r="52" stroke="url(#g)" stroke-width="8" stroke-linecap="round" fill="none"
+                  transform="rotate(-90 60 60)" stroke-dasharray="327" stroke-dashoffset="327"/>
+          <defs>
+            <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#7c5cff"></stop>
+              <stop offset="100%" stop-color="#33d6a6"></stop>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="time" id="time">25:00</div>
+      </div>
+
+      <div>
+        <div class="presets" style="margin-bottom:12px;">
+          <button class="chip active" data-mins="25">Pomodoro 25</button>
+          <button class="chip" data-mins="5">Short Break 5</button>
+          <button class="chip" data-mins="15">Long Break 15</button>
+          <span class="spacer"></span>
+          <label class="muted small">Custom:</label>
+          <input id="customMins" type="number" min="1" max="180" value="25" style="width:84px;" />
+          <button class="chip" id="applyCustom">Set</button>
+        </div>
+        <div class="controls" style="margin-bottom:12px;">
+          <button id="startBtn" class="primary">Start</button>
+          <button id="pauseBtn" class="ghost">Pause</button>
+          <button id="resetBtn" class="danger">Reset</button>
+        </div>
+        <div class="muted small">
+          Tip: switch presets anytime—progress resets to match the selected length.
+        </div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <strong>Quick Tasks</strong>
+        <div class="taskRow">
+          <input id="taskInput" type="text" placeholder="Add a task and press Enter…" />
+          <button id="addTask">Add</button>
+        </div>
+        <div id="taskList" style="display:grid; gap:8px; margin-top:12px;"></div>
+        <div class="foot">
+          <span class="muted small">Tasks save automatically.</span>
+          <div>
+            <button id="clearDone" class="ghost small">Clear done</button>
+            <button id="clearAll" class="ghost small">Clear all</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <strong>Session Notes</strong>
+        <textarea id="notes" rows="9" placeholder="Jot down what you’re focusing on…" style="width:100%; padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:#151935; color:var(--fg);"></textarea>
+        <div class="foot">
+          <span class="muted small">Notes auto-save locally.</span>
+          <a id="downloadNotes" href="#" class="link small">Download .txt</a>
+        </div>
+        <div class="muted small warn">No accounts, no tracking, just your browser.</div>
+      </div>
+    </section>
+
+    <footer class="muted small" style="text-align:center; margin-top:8px;">
+      Built for showcasing on LinkedIn — deploy with GitHub Pages in minutes.
+    </footer>
+  </div>
+
+<script>
+(() => {
+  // ---------- Utilities ----------
+  const $ = (sel, ctx=document) => ctx.querySelector(sel);
+  const $$ = (sel, ctx=document) => Array.from(ctx.querySelectorAll(sel));
+  const store = {
+    get(key, fallback) {
+      try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
+      catch { return fallback; }
+    },
+    set(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+  };
+
+  // ---------- Timer State ----------
+  let totalSecs = 25*60;
+  let remaining = totalSecs;
+  let tickId = null;
+  const ring = $('#progress');
+  const timeEl = $('#time');
+  const dash = 2 * Math.PI * 52; // circumference ≈ 327
+  ring.setAttribute('stroke-dasharray', dash);
+
+  function format(ms) {
+    const m = Math.floor(ms/60);
+    const s = ms % 60;
+    return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+  function render() {
+    timeEl.textContent = format(remaining);
+    const ratio = 1 - (remaining / totalSecs);
+    ring.setAttribute('stroke-dashoffset', String((1 - ratio) * dash));
+  }
+  function setLength(mins) {
+    mins = Math.max(1, Math.min(180, Number(mins)||25));
+    totalSecs = mins * 60;
+    remaining = totalSecs;
+    render();
+    $('#customMins').value = mins;
+    $$('.presets .chip').forEach(c => c.classList.toggle('active', c.dataset.mins == mins));
+    pause();
+  }
+  function start() {
+    if (tickId) return;
+    const startAt = Date.now();
+    let last = startAt;
+    tickId = setInterval(() => {
+      const now = Date.now();
+      const delta = Math.floor((now - last)/1000);
+      if (delta >= 1) {
+        remaining = Math.max(0, remaining - delta);
+        last = now;
+        render();
+        if (remaining <= 0) {
+          pause();
+          chime();
+        }
+      }
+    }, 250);
+  }
+  function pause() { clearInterval(tickId); tickId = null; }
+  function reset() { remaining = totalSecs; render(); pause(); }
+  function chime() {
+    if (!$('#soundToggle').checked) return;
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.type = "sine"; o.frequency.value = 880;
+      o.connect(g); g.connect(ctx.destination);
+      g.gain.setValueAtTime(0.001, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.0);
+      o.start(); o.stop(ctx.currentTime + 1.0);
+    } catch {}
+  }
+
+  // ---------- Presets ----------
+  $$('.presets .chip[data-mins]').forEach(btn => {
+    btn.addEventListener('click', () => setLength(Number(btn.dataset.mins)));
+  });
+  $('#applyCustom').addEventListener('click', () => setLength($('#customMins').value));
+  $('#startBtn').addEventListener('click', start);
+  $('#pauseBtn').addEventListener('click', pause);
+  $('#resetBtn').addEventListener('click', reset);
+
+  // ---------- Tasks ----------
+  function renderTasks() {
+    const tasks = store.get('tasks', []);
+    const list = $('#taskList');
+    list.innerHTML = '';
+    tasks.forEach((t, i) => {
+      const row = document.createElement('div'); row.className = 'taskItem' + (t.done?' done':'');
+      const cb = document.createElement('input'); cb.type = 'checkbox'; cb.className='checkbox'; cb.checked = !!t.done;
+      cb.addEventListener('change', () => { tasks[i].done = cb.checked; store.set('tasks', tasks); renderTasks(); });
+      const label = document.createElement('div'); label.textContent = t.text;
+      const del = document.createElement('button'); del.className='ghost small'; del.textContent='Delete';
+      del.addEventListener('click', () => { tasks.splice(i,1); store.set('tasks', tasks); renderTasks(); });
+      row.append(cb, label, del);
+      list.append(row);
+    });
+  }
+  function addTaskFromInput() {
+    const v = $('#taskInput').value.trim();
+    if (!v) return;
+    const tasks = store.get('tasks', []);
+    tasks.unshift({ text: v, done: false });
+    store.set('tasks', tasks);
+    $('#taskInput').value = '';
+    renderTasks();
+  }
+  $('#addTask').addEventListener('click', addTaskFromInput);
+  $('#taskInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTaskFromInput(); });
+  $('#clearDone').addEventListener('click', () => {
+    const tasks = store.get('tasks', []).filter(t => !t.done); store.set('tasks', tasks); renderTasks();
+  });
+  $('#clearAll').addEventListener('click', () => {
+    if (!confirm('Clear ALL tasks?')) return;
+    store.set('tasks', []); renderTasks();
+  });
+
+  // ---------- Notes ----------
+  const notes = $('#notes');
+  notes.value = store.get('notes', '');
+  notes.addEventListener('input', () => store.set('notes', notes.value));
+  $('#downloadNotes').addEventListener('click', (e) => {
+    e.preventDefault();
+    const blob = new Blob([notes.value], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `focus-notes-${new Date().toISOString().slice(0,10)}.txt`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 500);
+  });
+
+  // ---------- Settings ----------
+  const saved = store.get('settings', { mins: 25, sound: false });
+  $('#soundToggle').checked = !!saved.sound;
+  setLength(saved.mins || 25);
+  renderTasks();
+  render();
+
+  // Persist some state when leaving
+  window.addEventListener('beforeunload', () => {
+    store.set('settings', { mins: totalSecs/60, sound: $('#soundToggle').checked });
+  });
+})();
+</script>
+</body>
+</html>
 
