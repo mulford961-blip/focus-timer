@@ -281,6 +281,124 @@
       grid-template-columns: 1fr;
     }
   }
+
+  /* Stock Screener */
+  .stockSearch {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stockSearch input {
+    flex: 1;
+  }
+  .quickStocks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .stockChip {
+    padding: 8px 14px;
+    background: #1a1d20;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+  .stockChip:hover {
+    background: #23282b;
+    border-color: var(--accent);
+  }
+  .stockCard {
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .stockHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .stockSymbol {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .stockName {
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .stockPrice {
+    text-align: right;
+  }
+  .currentPrice {
+    font-size: 28px;
+    font-weight: 700;
+  }
+  .priceChange {
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  .priceChange.positive {
+    color: var(--accent);
+  }
+  .priceChange.negative {
+    color: var(--danger);
+  }
+  .stockStats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+  }
+  .statItem {
+    background: #0c0f10;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+  }
+  .statLabel {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .statValue {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--muted);
+  }
+  .error {
+    text-align: center;
+    padding: 20px;
+    color: var(--danger);
+    background: rgba(248, 113, 113, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(248, 113, 113, 0.3);
+  }
+  .stockList {
+    display: grid;
+    gap: 16px;
+  }
+  .emptyState {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .emptyState .icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
 </style>
 </head>
 <body>
@@ -301,6 +419,7 @@
       <button class="tab active" data-tab="focus">Focus & Productivity</button>
       <button class="tab" data-tab="games">Mini Games</button>
       <button class="tab" data-tab="ai">AI Tools</button>
+      <button class="tab" data-tab="stocks">Stock Screener</button>
     </div>
 
     <!-- Focus Tab Content -->
@@ -446,6 +565,45 @@
         <p style="color: var(--muted); font-size: 13px; margin-top: 32px;">
           Links open in new tabs so you can keep your timer running
         </p>
+      </section>
+    </div>
+
+    <!-- Stock Screener Tab Content -->
+    <div id="stocksTab" class="tabContent">
+      <section class="card">
+        <h2 style="font-size: 22px; font-weight: 700; margin-bottom: 8px;">Stock Screener</h2>
+        <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px;">
+          Search and analyze stocks with real-time data
+        </p>
+
+        <!-- Search Bar -->
+        <div class="stockSearch">
+          <input
+            id="stockSymbolInput"
+            type="text"
+            placeholder="Enter stock symbol (e.g., AAPL, GOOGL, TSLA)..."
+            style="text-transform: uppercase;"
+          />
+          <button id="searchStockBtn" class="primary">Search</button>
+        </div>
+
+        <!-- Quick Access Stocks -->
+        <div>
+          <div class="muted small" style="margin-bottom: 8px;">Quick Access:</div>
+          <div class="quickStocks">
+            <button class="stockChip" data-symbol="AAPL">AAPL</button>
+            <button class="stockChip" data-symbol="GOOGL">GOOGL</button>
+            <button class="stockChip" data-symbol="MSFT">MSFT</button>
+            <button class="stockChip" data-symbol="TSLA">TSLA</button>
+            <button class="stockChip" data-symbol="AMZN">AMZN</button>
+            <button class="stockChip" data-symbol="NVDA">NVDA</button>
+            <button class="stockChip" data-symbol="META">META</button>
+            <button class="stockChip" data-symbol="NFLX">NFLX</button>
+          </div>
+        </div>
+
+        <!-- Stock Results -->
+        <div id="stockResults"></div>
       </section>
     </div>
 
@@ -826,6 +984,219 @@
   }
 
   reactionBox?.addEventListener('click', handleReactionClick);
+
+  // ---------- Stock Screener ----------
+  const stockSymbolInput = $('#stockSymbolInput');
+  const searchStockBtn = $('#searchStockBtn');
+  const stockResults = $('#stockResults');
+  const stockChips = $$('.stockChip');
+
+  // Free API key for demo - users can replace with their own from https://www.alphavantage.co/support/#api-key
+  const ALPHA_VANTAGE_KEY = 'demo';
+
+  async function fetchStockData(symbol) {
+    symbol = symbol.toUpperCase().trim();
+    if (!symbol) return;
+
+    // Show loading state
+    stockResults.innerHTML = '<div class="loading">Loading stock data...</div>';
+
+    try {
+      // Fetch quote data from Alpha Vantage
+      const quoteResponse = await fetch(
+        `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_KEY}`
+      );
+      const quoteData = await quoteResponse.json();
+
+      // Fetch company overview
+      const overviewResponse = await fetch(
+        `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${symbol}&apikey=${ALPHA_VANTAGE_KEY}`
+      );
+      const overviewData = await overviewResponse.json();
+
+      // Check if data is valid
+      if (!quoteData['Global Quote'] || Object.keys(quoteData['Global Quote']).length === 0) {
+        throw new Error('Invalid symbol or API limit reached. Try demo symbol "IBM" or get a free API key.');
+      }
+
+      displayStockData(symbol, quoteData['Global Quote'], overviewData);
+
+      // Save to recent searches
+      saveRecentSearch(symbol);
+
+    } catch (error) {
+      stockResults.innerHTML = `
+        <div class="error">
+          <strong>Error:</strong> ${error.message}<br><br>
+          <div style="font-size: 13px; margin-top: 12px;">
+            💡 <strong>Tip:</strong> This demo uses Alpha Vantage API with limited calls.<br>
+            For unlimited access, get a free API key at
+            <a href="https://www.alphavantage.co/support/#api-key" target="_blank" class="link">alphavantage.co</a>
+            and replace the key in the code.
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  function displayStockData(symbol, quote, overview) {
+    const price = parseFloat(quote['05. price'] || 0);
+    const change = parseFloat(quote['09. change'] || 0);
+    const changePercent = quote['10. change percent'] || '0%';
+    const volume = parseInt(quote['06. volume'] || 0);
+    const previousClose = parseFloat(quote['08. previous close'] || 0);
+    const open = parseFloat(quote['02. open'] || 0);
+    const high = parseFloat(quote['03. high'] || 0);
+    const low = parseFloat(quote['04. low'] || 0);
+
+    const marketCap = overview.MarketCapitalization || 'N/A';
+    const peRatio = overview.PERatio || 'N/A';
+    const dividendYield = overview.DividendYield || 'N/A';
+    const week52High = overview['52WeekHigh'] || 'N/A';
+    const week52Low = overview['52WeekLow'] || 'N/A';
+    const eps = overview.EPS || 'N/A';
+    const beta = overview.Beta || 'N/A';
+    const companyName = overview.Name || symbol;
+
+    const isPositive = change >= 0;
+    const changeClass = isPositive ? 'positive' : 'negative';
+    const changeSign = isPositive ? '+' : '';
+
+    stockResults.innerHTML = `
+      <div class="stockList">
+        <div class="card stockCard">
+          <div class="stockHeader">
+            <div>
+              <div class="stockSymbol">${symbol}</div>
+              <div class="stockName">${companyName}</div>
+            </div>
+            <div class="stockPrice">
+              <div class="currentPrice">$${price.toFixed(2)}</div>
+              <div class="priceChange ${changeClass}">
+                ${changeSign}${change.toFixed(2)} (${changePercent})
+              </div>
+            </div>
+          </div>
+
+          <div class="stockStats">
+            <div class="statItem">
+              <div class="statLabel">Open</div>
+              <div class="statValue">$${open.toFixed(2)}</div>
+            </div>
+            <div class="statItem">
+              <div class="statLabel">High</div>
+              <div class="statValue">$${high.toFixed(2)}</div>
+            </div>
+            <div class="statItem">
+              <div class="statLabel">Low</div>
+              <div class="statValue">$${low.toFixed(2)}</div>
+            </div>
+            <div class="statItem">
+              <div class="statLabel">Prev Close</div>
+              <div class="statValue">$${previousClose.toFixed(2)}</div>
+            </div>
+            <div class="statItem">
+              <div class="statLabel">Volume</div>
+              <div class="statValue">${formatVolume(volume)}</div>
+            </div>
+            <div class="statItem">
+              <div class="statLabel">Market Cap</div>
+              <div class="statValue">${formatMarketCap(marketCap)}</div>
+            </div>
+            <div class="statItem">
+              <div class="statLabel">P/E Ratio</div>
+              <div class="statValue">${peRatio !== 'N/A' ? parseFloat(peRatio).toFixed(2) : 'N/A'}</div>
+            </div>
+            <div class="statItem">
+              <div class="statLabel">EPS</div>
+              <div class="statValue">${eps !== 'N/A' ? parseFloat(eps).toFixed(2) : 'N/A'}</div>
+            </div>
+            <div class="statItem">
+              <div class="statLabel">52W High</div>
+              <div class="statValue">${week52High !== 'N/A' ? '$' + parseFloat(week52High).toFixed(2) : 'N/A'}</div>
+            </div>
+            <div class="statItem">
+              <div class="statLabel">52W Low</div>
+              <div class="statValue">${week52Low !== 'N/A' ? '$' + parseFloat(week52Low).toFixed(2) : 'N/A'}</div>
+            </div>
+            <div class="statItem">
+              <div class="statLabel">Dividend Yield</div>
+              <div class="statValue">${dividendYield !== 'N/A' ? (parseFloat(dividendYield) * 100).toFixed(2) + '%' : 'N/A'}</div>
+            </div>
+            <div class="statItem">
+              <div class="statLabel">Beta</div>
+              <div class="statValue">${beta !== 'N/A' ? parseFloat(beta).toFixed(2) : 'N/A'}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function formatVolume(volume) {
+    if (volume >= 1000000000) {
+      return (volume / 1000000000).toFixed(2) + 'B';
+    } else if (volume >= 1000000) {
+      return (volume / 1000000).toFixed(2) + 'M';
+    } else if (volume >= 1000) {
+      return (volume / 1000).toFixed(2) + 'K';
+    }
+    return volume.toString();
+  }
+
+  function formatMarketCap(marketCap) {
+    if (marketCap === 'N/A' || !marketCap) return 'N/A';
+    const cap = parseFloat(marketCap);
+    if (cap >= 1000000000000) {
+      return '$' + (cap / 1000000000000).toFixed(2) + 'T';
+    } else if (cap >= 1000000000) {
+      return '$' + (cap / 1000000000).toFixed(2) + 'B';
+    } else if (cap >= 1000000) {
+      return '$' + (cap / 1000000).toFixed(2) + 'M';
+    }
+    return '$' + cap.toFixed(2);
+  }
+
+  function saveRecentSearch(symbol) {
+    let recent = store.get('recentStocks', []);
+    recent = recent.filter(s => s !== symbol);
+    recent.unshift(symbol);
+    recent = recent.slice(0, 5);
+    store.set('recentStocks', recent);
+  }
+
+  // Event listeners for stock search
+  searchStockBtn?.addEventListener('click', () => {
+    const symbol = stockSymbolInput.value;
+    if (symbol) fetchStockData(symbol);
+  });
+
+  stockSymbolInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const symbol = stockSymbolInput.value;
+      if (symbol) fetchStockData(symbol);
+    }
+  });
+
+  // Quick access stock chips
+  stockChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      const symbol = chip.dataset.symbol;
+      stockSymbolInput.value = symbol;
+      fetchStockData(symbol);
+    });
+  });
+
+  // Show empty state initially
+  if (stockResults) {
+    stockResults.innerHTML = `
+      <div class="emptyState">
+        <div class="icon">📈</div>
+        <div style="font-size: 16px; margin-bottom: 8px;">Search for a stock to get started</div>
+        <div style="font-size: 13px;">Try searching for AAPL, GOOGL, or use the quick access buttons above</div>
+      </div>
+    `;
+  }
 })();
 </script>
 </body>
