@@ -586,6 +586,147 @@
     margin-bottom: 12px;
     opacity: 0.5;
   }
+
+  /* Loot Box & Rarity Styles */
+  .rarity-common { border-color: #9ca3af !important; color: #9ca3af; }
+  .rarity-rare { border-color: #3b82f6 !important; color: #3b82f6; }
+  .rarity-epic { border-color: #a855f7 !important; color: #a855f7; }
+  .rarity-legendary { border-color: #f59e0b !important; color: #f59e0b; }
+
+  .rarity-common { background: linear-gradient(135deg, rgba(156, 163, 175, 0.1), rgba(156, 163, 175, 0.05)); }
+  .rarity-rare { background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05)); }
+  .rarity-epic { background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(168, 85, 247, 0.05)); }
+  .rarity-legendary { background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.05)); }
+
+  .food-item {
+    padding: 12px;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .food-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .food-item.locked {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  .food-item.locked:hover {
+    transform: none;
+  }
+
+  .food-emoji {
+    font-size: 48px;
+    margin-bottom: 8px;
+  }
+
+  .food-name {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .food-rarity {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .loot-box-counter {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 14px;
+    color: #000;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .loot-box-counter:hover {
+    transform: scale(1.05);
+    filter: brightness(1.1);
+  }
+
+  @keyframes lootBoxShake {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-10deg); }
+    75% { transform: rotate(10deg); }
+  }
+
+  @keyframes lootBoxOpen {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2) rotate(20deg); }
+    100% { transform: scale(0) rotate(180deg); opacity: 0; }
+  }
+
+  @keyframes itemReveal {
+    0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  .loot-box-icon {
+    font-size: 80px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    display: inline-block;
+  }
+
+  .loot-box-icon:hover {
+    animation: lootBoxShake 0.5s ease infinite;
+  }
+
+  .loot-box-icon.opening {
+    animation: lootBoxOpen 0.8s ease forwards;
+  }
+
+  .revealed-items {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 24px;
+  }
+
+  .revealed-item {
+    opacity: 0;
+    animation: itemReveal 0.6s ease forwards;
+  }
+
+  .revealed-item:nth-child(1) { animation-delay: 0.3s; }
+  .revealed-item:nth-child(2) { animation-delay: 0.5s; }
+  .revealed-item:nth-child(3) { animation-delay: 0.7s; }
+
+  .collection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .new-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--danger);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 12px;
+    animation: pulse 1s ease infinite;
+  }
 </style>
 </head>
 <body>
@@ -610,6 +751,9 @@
           <button id="rewardsBtn" class="ghost" style="padding: 6px 10px; font-size: 18px; line-height: 1;">
             🎁
           </button>
+          <div id="lootBoxCounter" class="loot-box-counter" style="display: none;">
+            📦 <span id="lootBoxCount">0</span>
+          </div>
         </div>
 
         <button id="themeToggle" class="ghost" style="padding: 8px 14px;">
@@ -830,13 +974,69 @@
     ]
   };
 
+  // ---------- Loot Box & Food Items System ----------
+  const FOOD_ITEMS = {
+    common: [
+      { id: 'apple', name: 'Apple', emoji: '🍎', rarity: 'common' },
+      { id: 'banana', name: 'Banana', emoji: '🍌', rarity: 'common' },
+      { id: 'orange', name: 'Orange', emoji: '🍊', rarity: 'common' },
+      { id: 'grapes', name: 'Grapes', emoji: '🍇', rarity: 'common' },
+      { id: 'watermelon', name: 'Watermelon', emoji: '🍉', rarity: 'common' },
+      { id: 'strawberry', name: 'Strawberry', emoji: '🍓', rarity: 'common' },
+      { id: 'bread', name: 'Bread', emoji: '🍞', rarity: 'common' },
+      { id: 'cheese', name: 'Cheese', emoji: '🧀', rarity: 'common' },
+      { id: 'egg', name: 'Egg', emoji: '🥚', rarity: 'common' },
+      { id: 'carrot', name: 'Carrot', emoji: '🥕', rarity: 'common' },
+      { id: 'corn', name: 'Corn', emoji: '🌽', rarity: 'common' },
+      { id: 'broccoli', name: 'Broccoli', emoji: '🥦', rarity: 'common' }
+    ],
+    rare: [
+      { id: 'pizza', name: 'Pizza', emoji: '🍕', rarity: 'rare' },
+      { id: 'burger', name: 'Burger', emoji: '🍔', rarity: 'rare' },
+      { id: 'sushi', name: 'Sushi', emoji: '🍣', rarity: 'rare' },
+      { id: 'taco', name: 'Taco', emoji: '🌮', rarity: 'rare' },
+      { id: 'ramen', name: 'Ramen', emoji: '🍜', rarity: 'rare' },
+      { id: 'icecream', name: 'Ice Cream', emoji: '🍦', rarity: 'rare' },
+      { id: 'donut', name: 'Donut', emoji: '🍩', rarity: 'rare' },
+      { id: 'cake', name: 'Cake', emoji: '🍰', rarity: 'rare' },
+      { id: 'cookie', name: 'Cookie', emoji: '🍪', rarity: 'rare' },
+      { id: 'croissant', name: 'Croissant', emoji: '🥐', rarity: 'rare' }
+    ],
+    epic: [
+      { id: 'lobster', name: 'Lobster', emoji: '🦞', rarity: 'epic' },
+      { id: 'steak', name: 'Steak', emoji: '🥩', rarity: 'epic' },
+      { id: 'sashimi', name: 'Sashimi', emoji: '🍱', rarity: 'epic' },
+      { id: 'paella', name: 'Paella', emoji: '🥘', rarity: 'epic' },
+      { id: 'champagne', name: 'Champagne', emoji: '🍾', rarity: 'epic' },
+      { id: 'birthday-cake', name: 'Birthday Cake', emoji: '🎂', rarity: 'epic' },
+      { id: 'cupcake', name: 'Cupcake', emoji: '🧁', rarity: 'epic' }
+    ],
+    legendary: [
+      { id: 'golden-apple', name: 'Golden Apple', emoji: '🍎✨', rarity: 'legendary' },
+      { id: 'truffle', name: 'Truffle', emoji: '🍄‍🟫', rarity: 'legendary' },
+      { id: 'caviar', name: 'Caviar', emoji: '🥫', rarity: 'legendary' },
+      { id: 'gold-cake', name: 'Gold Cake', emoji: '🎂✨', rarity: 'legendary' },
+      { id: 'ambrosia', name: 'Ambrosia', emoji: '🍯✨', rarity: 'legendary' }
+    ]
+  };
+
+  const RARITY_WEIGHTS = {
+    common: 60,
+    rare: 25,
+    epic: 12,
+    legendary: 3
+  };
+
   function getUserProgress() {
     return store.get('userProgress', {
       xp: 0,
       level: 1,
       selectedTheme: 'default',
       selectedSound: 'default',
-      selectedIcon: 'default'
+      selectedIcon: 'default',
+      lootBoxes: 0,
+      foodCollection: [],
+      newItems: [] // Track recently unlocked items
     });
   }
 
@@ -860,6 +1060,80 @@
       return LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1];
     }
     return LEVEL_THRESHOLDS[currentLevel];
+  }
+
+  // ---------- Loot Box Mechanics ----------
+  function getRandomRarity() {
+    const rand = Math.random() * 100;
+    let cumulative = 0;
+
+    for (const [rarity, weight] of Object.entries(RARITY_WEIGHTS)) {
+      cumulative += weight;
+      if (rand <= cumulative) {
+        return rarity;
+      }
+    }
+    return 'common';
+  }
+
+  function getRandomFoodItem(rarity) {
+    const items = FOOD_ITEMS[rarity];
+    return items[Math.floor(Math.random() * items.length)];
+  }
+
+  function openLootBox() {
+    const progress = getUserProgress();
+
+    if (progress.lootBoxes <= 0) {
+      showToast('⚠️ No loot boxes available!', 'danger');
+      return;
+    }
+
+    // Deduct one loot box
+    progress.lootBoxes--;
+
+    // Generate 3 random items
+    const items = [];
+    for (let i = 0; i < 3; i++) {
+      const rarity = getRandomRarity();
+      const item = getRandomFoodItem(rarity);
+      items.push(item);
+
+      // Add to collection if not already owned
+      if (!progress.foodCollection.includes(item.id)) {
+        progress.foodCollection.push(item.id);
+        if (!progress.newItems.includes(item.id)) {
+          progress.newItems.push(item.id);
+        }
+      }
+    }
+
+    saveUserProgress(progress);
+    updateLootBoxDisplay();
+    showLootBoxOpenModal(items);
+
+    return items;
+  }
+
+  function awardLootBoxes(count, reason) {
+    const progress = getUserProgress();
+    progress.lootBoxes += count;
+    saveUserProgress(progress);
+    updateLootBoxDisplay();
+    showToast(`📦 +${count} Loot Box${count > 1 ? 'es' : ''}: ${reason}`, 'success');
+  }
+
+  function updateLootBoxDisplay() {
+    const progress = getUserProgress();
+    const counter = $('#lootBoxCounter');
+    const countEl = $('#lootBoxCount');
+
+    if (progress.lootBoxes > 0) {
+      counter.style.display = 'inline-flex';
+      countEl.textContent = progress.lootBoxes;
+    } else {
+      counter.style.display = 'none';
+    }
   }
 
   function awardXP(amount, reason) {
@@ -903,6 +1177,13 @@
       }
     });
 
+    // Award loot boxes on milestone levels
+    let lootBoxReward = 0;
+    if (newLevel % 3 === 0) {
+      lootBoxReward = Math.floor(newLevel / 3);
+      awardLootBoxes(lootBoxReward, `Level ${newLevel} milestone`);
+    }
+
     const rewardsHtml = newRewards.length > 0
       ? `
         <div style="margin-top: 16px; padding: 12px; background: var(--bg2); border-radius: 8px;">
@@ -910,6 +1191,15 @@
           <ul style="margin: 8px 0; padding-left: 20px;">
             ${newRewards.map(r => `<li>${r.type}: ${r.name}</li>`).join('')}
           </ul>
+        </div>
+      `
+      : '';
+
+    const lootBoxHtml = lootBoxReward > 0
+      ? `
+        <div style="margin-top: 16px; padding: 12px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); border-radius: 8px; color: #000;">
+          <strong>📦 Bonus Loot Box${lootBoxReward > 1 ? 'es' : ''}!</strong>
+          <div style="margin-top: 4px;">You received ${lootBoxReward} loot box${lootBoxReward > 1 ? 'es' : ''} for reaching level ${newLevel}!</div>
         </div>
       `
       : '';
@@ -924,6 +1214,7 @@
             Level ${oldLevel} → Level ${newLevel}
           </p>
           ${rewardsHtml}
+          ${lootBoxHtml}
           <div class="modal-actions" style="margin-top: 24px;">
             <button class="primary" id="closeLevelUp">Awesome!</button>
           </div>
@@ -935,6 +1226,167 @@
     $('#closeLevelUp', modal).addEventListener('click', () => {
       modal.remove();
     });
+
+    $('.modal-overlay', modal).addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal-overlay')) {
+        modal.remove();
+      }
+    });
+  }
+
+  function showLootBoxOpenModal(items) {
+    const modal = document.createElement('div');
+    modal.innerHTML = `
+      <div class="modal-overlay">
+        <div class="modal" style="text-align: center;">
+          <h2>📦 Opening Loot Box...</h2>
+          <div style="margin: 40px 0;">
+            <div class="loot-box-icon" id="lootBoxIcon">📦</div>
+          </div>
+          <div id="revealedItems" class="revealed-items" style="display: none;"></div>
+          <div class="modal-actions" style="margin-top: 24px; display: none;" id="closeActions">
+            <button class="primary" id="closeLootBox">Continue</button>
+            <button class="ghost" id="viewCollection">View Collection</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const lootBoxIcon = $('#lootBoxIcon', modal);
+    const revealedItems = $('#revealedItems', modal);
+    const closeActions = $('#closeActions', modal);
+
+    // Animate loot box opening
+    setTimeout(() => {
+      lootBoxIcon.classList.add('opening');
+    }, 500);
+
+    // Show revealed items after animation
+    setTimeout(() => {
+      lootBoxIcon.style.display = 'none';
+      revealedItems.style.display = 'grid';
+
+      const progress = getUserProgress();
+      revealedItems.innerHTML = items.map(item => {
+        const isNew = progress.newItems.includes(item.id);
+        return `
+          <div class="revealed-item food-item rarity-${item.rarity}">
+            ${isNew ? '<div class="new-badge">NEW!</div>' : ''}
+            <div class="food-emoji">${item.emoji}</div>
+            <div class="food-name">${item.name}</div>
+            <div class="food-rarity rarity-${item.rarity}">${item.rarity}</div>
+          </div>
+        `;
+      }).join('');
+
+      closeActions.style.display = 'flex';
+    }, 1300);
+
+    $('#closeLootBox', modal).addEventListener('click', () => {
+      modal.remove();
+    });
+
+    $('#viewCollection', modal).addEventListener('click', () => {
+      modal.remove();
+      showFoodCollectionModal();
+    });
+
+    $('.modal-overlay', modal).addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal-overlay')) {
+        modal.remove();
+      }
+    });
+  }
+
+  function showFoodCollectionModal() {
+    const progress = getUserProgress();
+    const allFoods = [
+      ...FOOD_ITEMS.common,
+      ...FOOD_ITEMS.rare,
+      ...FOOD_ITEMS.epic,
+      ...FOOD_ITEMS.legendary
+    ];
+
+    const unlockedCount = progress.foodCollection.length;
+    const totalCount = allFoods.length;
+    const completionPercent = Math.round((unlockedCount / totalCount) * 100);
+
+    const modal = document.createElement('div');
+    modal.innerHTML = `
+      <div class="modal-overlay">
+        <div class="modal" style="max-width: 800px;">
+          <h2>🍱 Food Collection</h2>
+          <p style="color: var(--muted); margin-bottom: 16px;">
+            Collected: ${unlockedCount} / ${totalCount} (${completionPercent}%)
+          </p>
+
+          <div style="margin-bottom: 24px;">
+            <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+              <button class="chip active" data-filter="all">All (${totalCount})</button>
+              <button class="chip" data-filter="common">Common (${FOOD_ITEMS.common.length})</button>
+              <button class="chip" data-filter="rare">Rare (${FOOD_ITEMS.rare.length})</button>
+              <button class="chip" data-filter="epic">Epic (${FOOD_ITEMS.epic.length})</button>
+              <button class="chip" data-filter="legendary">Legendary (${FOOD_ITEMS.legendary.length})</button>
+            </div>
+          </div>
+
+          <div class="collection-grid" id="collectionGrid">
+            ${allFoods.map(item => {
+              const isUnlocked = progress.foodCollection.includes(item.id);
+              const isNew = progress.newItems.includes(item.id);
+              return `
+                <div class="food-item rarity-${item.rarity} ${!isUnlocked ? 'locked' : ''}" data-rarity="${item.rarity}">
+                  ${isNew && isUnlocked ? '<div class="new-badge">NEW!</div>' : ''}
+                  <div class="food-emoji">${isUnlocked ? item.emoji : '🔒'}</div>
+                  <div class="food-name">${isUnlocked ? item.name : '???'}</div>
+                  <div class="food-rarity rarity-${item.rarity}">${item.rarity}</div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          <div class="modal-actions" style="margin-top: 24px;">
+            <button class="primary" id="closeCollection">Close</button>
+            ${progress.newItems.length > 0 ? '<button class="ghost" id="clearNew">Clear New Badges</button>' : ''}
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Filter functionality
+    $$('.chip[data-filter]', modal).forEach(chip => {
+      chip.addEventListener('click', () => {
+        $$('.chip[data-filter]', modal).forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+
+        const filter = chip.dataset.filter;
+        const items = $$('.food-item', modal);
+
+        items.forEach(item => {
+          if (filter === 'all' || item.dataset.rarity === filter) {
+            item.style.display = 'block';
+          } else {
+            item.style.display = 'none';
+          }
+        });
+      });
+    });
+
+    $('#closeCollection', modal).addEventListener('click', () => {
+      modal.remove();
+    });
+
+    const clearNewBtn = $('#clearNew', modal);
+    if (clearNewBtn) {
+      clearNewBtn.addEventListener('click', () => {
+        progress.newItems = [];
+        saveUserProgress(progress);
+        modal.remove();
+        showToast('✓ New badges cleared', 'success');
+      });
+    }
 
     $('.modal-overlay', modal).addEventListener('click', (e) => {
       if (e.target.classList.contains('modal-overlay')) {
@@ -977,11 +1429,42 @@
     const lockedSounds = REWARDS.sounds.filter(s => s.level > currentLevel);
     const lockedIcons = REWARDS.icons.filter(i => i.level > currentLevel);
 
+    const allFoods = [
+      ...FOOD_ITEMS.common,
+      ...FOOD_ITEMS.rare,
+      ...FOOD_ITEMS.epic,
+      ...FOOD_ITEMS.legendary
+    ];
+    const unlockedFoods = allFoods.filter(f => progress.foodCollection.includes(f.id)).length;
+
     const modal = document.createElement('div');
     modal.innerHTML = `
       <div class="modal-overlay">
         <div class="modal">
           <h2>🎁 Rewards & Customization</h2>
+
+          <div class="modal-section">
+            <label>🍱 Food Collection</label>
+            <span class="muted">Open loot boxes to collect rare food items</span>
+            <div style="margin-top: 12px; padding: 16px; background: var(--bg2); border-radius: 12px; border: 2px solid var(--line);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div>
+                  <div style="font-size: 24px; font-weight: 700; color: var(--accent);">${unlockedFoods} / ${allFoods.length}</div>
+                  <div style="font-size: 12px; color: var(--muted);">Foods Collected</div>
+                </div>
+                <button id="viewCollectionBtn" class="primary" style="padding: 8px 16px;">View Collection</button>
+              </div>
+              ${progress.lootBoxes > 0 ? `
+                <button id="openLootBoxBtn" class="primary" style="width: 100%; padding: 12px; font-size: 16px;">
+                  📦 Open Loot Box (${progress.lootBoxes} available)
+                </button>
+              ` : `
+                <div style="text-align: center; padding: 12px; color: var(--muted); font-size: 13px;">
+                  💡 Earn loot boxes by leveling up! You get a loot box every 3 levels.
+                </div>
+              `}
+            </div>
+          </div>
 
           <div class="modal-section">
             <label>Timer Icons (Coming Soon)</label>
@@ -1086,6 +1569,23 @@
         showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} selected!`, 'success');
       });
     });
+
+    // Loot box and collection button handlers
+    const viewCollectionBtn = $('#viewCollectionBtn', modal);
+    if (viewCollectionBtn) {
+      viewCollectionBtn.addEventListener('click', () => {
+        modal.remove();
+        showFoodCollectionModal();
+      });
+    }
+
+    const openLootBoxBtn = $('#openLootBoxBtn', modal);
+    if (openLootBoxBtn) {
+      openLootBoxBtn.addEventListener('click', () => {
+        modal.remove();
+        openLootBox();
+      });
+    }
 
     $('#closeRewards', modal).addEventListener('click', () => {
       modal.remove();
@@ -1661,8 +2161,29 @@
   $('#soundToggle').checked = !!saved.sound;
   setLength(saved.mins || 25);
 
+  // Migrate loot box system for existing users
+  function migrateLootBoxSystem() {
+    const progress = getUserProgress();
+
+    // Check if this is a first-time migration (no foodCollection key exists in old progress)
+    const oldProgress = store.get('userProgress', {});
+
+    if (!oldProgress.hasOwnProperty('foodCollection') && oldProgress.hasOwnProperty('xp')) {
+      // Existing user, give them starter loot boxes based on level
+      const starterBoxes = Math.max(1, Math.floor(progress.level / 3));
+      progress.lootBoxes = starterBoxes;
+      saveUserProgress(progress);
+
+      // Show welcome toast
+      setTimeout(() => {
+        showToast(`🎉 New Feature! You received ${starterBoxes} loot box${starterBoxes > 1 ? 'es' : ''} to get started!`, 'success');
+      }, 1000);
+    }
+  }
+
   // Migrate tasks on load
   migrateTasks();
+  migrateLootBoxSystem();
   renderTasks();
   renderAnalytics();
   renderSessionHistory();
@@ -1671,6 +2192,19 @@
 
   // Rewards button event listener
   $('#rewardsBtn').addEventListener('click', showRewardsModal);
+
+  // Loot box counter event listener
+  $('#lootBoxCounter').addEventListener('click', () => {
+    const progress = getUserProgress();
+    if (progress.lootBoxes > 0) {
+      openLootBox();
+    } else {
+      showRewardsModal();
+    }
+  });
+
+  // Initialize loot box display
+  updateLootBoxDisplay();
 
   // Persist some state when leaving
   window.addEventListener('beforeunload', () => {
