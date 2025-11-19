@@ -727,6 +727,177 @@
     border-radius: 12px;
     animation: pulse 1s ease infinite;
   }
+
+  /* Clicker Game Styles */
+  .clicker-container {
+    display: grid;
+    gap: 22px;
+  }
+
+  .game-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  .click-button-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    position: relative;
+  }
+
+  .click-button {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border: 4px solid var(--card);
+    box-shadow: 0 10px 40px rgba(0, 194, 111, 0.4);
+    cursor: pointer;
+    transition: all 0.1s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 80px;
+    user-select: none;
+    position: relative;
+  }
+
+  .click-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 12px 50px rgba(0, 194, 111, 0.6);
+  }
+
+  .click-button:active {
+    transform: scale(0.95);
+  }
+
+  @keyframes clickPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+
+  .click-button.clicked {
+    animation: clickPop 0.2s ease;
+  }
+
+  .floating-coin {
+    position: absolute;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent);
+    pointer-events: none;
+    animation: floatUp 1s ease-out forwards;
+    z-index: 100;
+  }
+
+  @keyframes floatUp {
+    0% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-100px) scale(1.5);
+    }
+  }
+
+  .upgrade-card {
+    background: var(--bg2);
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .upgrade-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .upgrade-card.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .upgrade-card.disabled:hover {
+    transform: none;
+    border-color: var(--line);
+  }
+
+  .upgrade-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .upgrade-icon {
+    font-size: 32px;
+  }
+
+  .upgrade-level {
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--card);
+    padding: 4px 8px;
+    border-radius: 8px;
+  }
+
+  .upgrade-name {
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+
+  .upgrade-description {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .upgrade-cost {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--accent);
+  }
+
+  .shop-item {
+    background: var(--bg2);
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.2s ease;
+  }
+
+  .shop-item:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .shop-icon {
+    font-size: 64px;
+    margin-bottom: 12px;
+  }
+
+  .shop-price {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
 </style>
 </head>
 <body>
@@ -769,6 +940,7 @@
     <!-- Tab Navigation -->
     <div class="tabs">
       <button class="tab active" data-tab="focus">Focus & Productivity</button>
+      <button class="tab" data-tab="game">Food Game</button>
       <button class="tab" data-tab="history">Session History</button>
       <button class="tab" data-tab="ai">AI Tools</button>
     </div>
@@ -861,6 +1033,86 @@
         <div class="muted small warn">No accounts, no tracking, just your browser.</div>
       </div>
     </section>
+    </div>
+
+    <!-- Food Game Tab Content -->
+    <div id="gameTab" class="tabContent">
+      <div class="clicker-container">
+
+        <!-- Game Stats -->
+        <section class="card">
+          <strong>🪙 Your Stats</strong>
+          <div class="game-stats" style="margin-top: 16px;">
+            <div class="stat-card">
+              <div class="stat-value" id="gameFoodCoins">0</div>
+              <div class="stat-label">Food Coins</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="gameClickPower">1</div>
+              <div class="stat-label">Per Click</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="gameTotalClicks">0</div>
+              <div class="stat-label">Total Clicks</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="gameCoinsPerSec">0</div>
+              <div class="stat-label">Per Second</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Click Area -->
+        <section class="card">
+          <div class="click-button-area">
+            <h2 style="margin-bottom: 24px;">Click to Earn Coins!</h2>
+            <div id="clickButton" class="click-button">
+              🍔
+            </div>
+            <p class="muted" style="margin-top: 24px; text-align: center;">
+              Click the burger to earn food coins and unlock rare food items!
+            </p>
+          </div>
+        </section>
+
+        <!-- Shop -->
+        <section class="card">
+          <strong>🏪 Shop</strong>
+          <p class="muted" style="margin-top: 8px; margin-bottom: 16px;">
+            Spend your food coins on loot boxes and upgrades
+          </p>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+            <div class="shop-item" id="buyLootBox">
+              <div class="shop-icon">📦</div>
+              <div style="font-weight: 700; font-size: 18px; margin-bottom: 8px;">Loot Box</div>
+              <div class="shop-price">
+                <span>🪙</span>
+                <span>100</span>
+              </div>
+              <button class="primary" style="width: 100%;">Buy</button>
+            </div>
+            <div class="shop-item" id="buyXP">
+              <div class="shop-icon">⭐</div>
+              <div style="font-weight: 700; font-size: 18px; margin-bottom: 8px;">50 XP</div>
+              <div class="shop-price">
+                <span>🪙</span>
+                <span>50</span>
+              </div>
+              <button class="primary" style="width: 100%;">Buy</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Upgrades -->
+        <section class="card">
+          <strong>⬆️ Upgrades</strong>
+          <p class="muted" style="margin-top: 8px; margin-bottom: 16px;">
+            Improve your clicking power and earn more coins
+          </p>
+          <div id="upgradesContainer" style="display: grid; gap: 12px;"></div>
+        </section>
+
+      </div>
     </div>
 
     <!-- Session History Tab Content -->
@@ -1036,7 +1288,17 @@
       selectedIcon: 'default',
       lootBoxes: 0,
       foodCollection: [],
-      newItems: [] // Track recently unlocked items
+      newItems: [], // Track recently unlocked items
+      // Clicker game data
+      foodCoins: 0,
+      totalClicks: 0,
+      clickPower: 1,
+      upgrades: {
+        clickPower: 0,      // Level of click power upgrade
+        autoClicker: 0,     // Level of auto-clicker
+        luckyChance: 0      // Level of lucky click chance
+      },
+      lastAutoClickTime: Date.now()
     });
   }
 
@@ -1134,6 +1396,250 @@
     } else {
       counter.style.display = 'none';
     }
+  }
+
+  // ---------- Clicker Game System ----------
+  const UPGRADES = {
+    clickPower: {
+      name: 'Mighty Fingers',
+      description: 'Increase coins per click',
+      icon: '💪',
+      baseCost: 50,
+      costMultiplier: 1.5,
+      getBonus: (level) => level * 1,
+      getNextBonus: (level) => (level + 1) * 1
+    },
+    autoClicker: {
+      name: 'Auto Chef',
+      description: 'Earn coins automatically',
+      icon: '🤖',
+      baseCost: 200,
+      costMultiplier: 2,
+      getBonus: (level) => level * 2,
+      getNextBonus: (level) => (level + 1) * 2
+    },
+    luckyChance: {
+      name: 'Lucky Strike',
+      description: '5% chance for 10x coins',
+      icon: '🍀',
+      baseCost: 500,
+      costMultiplier: 3,
+      getBonus: (level) => level * 5,
+      getNextBonus: (level) => (level + 1) * 5
+    }
+  };
+
+  function getUpgradeCost(upgradeKey, currentLevel) {
+    const upgrade = UPGRADES[upgradeKey];
+    return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, currentLevel));
+  }
+
+  function handleClick(e) {
+    const progress = getUserProgress();
+    const button = $('#clickButton');
+    const clickArea = $('.click-button-area');
+
+    // Calculate coins earned
+    let coinsEarned = progress.clickPower;
+
+    // Lucky chance check
+    const luckyLevel = progress.upgrades.luckyChance;
+    if (luckyLevel > 0 && Math.random() < 0.05 * luckyLevel) {
+      coinsEarned *= 10;
+      showToast('🍀 Lucky Strike! 10x Coins!', 'success');
+    }
+
+    // Update progress
+    progress.foodCoins += coinsEarned;
+    progress.totalClicks++;
+    saveUserProgress(progress);
+
+    // Visual feedback
+    button.classList.add('clicked');
+    setTimeout(() => button.classList.remove('clicked'), 200);
+
+    // Floating coin animation
+    const rect = button.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+
+    const floatingCoin = document.createElement('div');
+    floatingCoin.className = 'floating-coin';
+    floatingCoin.textContent = `+${coinsEarned} 🪙`;
+    floatingCoin.style.left = `${rect.left + clickX}px`;
+    floatingCoin.style.top = `${rect.top + clickY}px`;
+    document.body.appendChild(floatingCoin);
+
+    setTimeout(() => floatingCoin.remove(), 1000);
+
+    // Update UI
+    renderGameStats();
+  }
+
+  function processAutoClicker() {
+    const progress = getUserProgress();
+    const now = Date.now();
+    const timePassed = (now - progress.lastAutoClickTime) / 1000; // seconds
+
+    if (progress.upgrades.autoClicker > 0) {
+      const coinsPerSecond = UPGRADES.autoClicker.getBonus(progress.upgrades.autoClicker);
+      const coinsEarned = Math.floor(coinsPerSecond * timePassed);
+
+      if (coinsEarned > 0) {
+        progress.foodCoins += coinsEarned;
+        progress.lastAutoClickTime = now;
+        saveUserProgress(progress);
+      }
+    } else {
+      progress.lastAutoClickTime = now;
+      saveUserProgress(progress);
+    }
+  }
+
+  function buyUpgrade(upgradeKey) {
+    const progress = getUserProgress();
+    const currentLevel = progress.upgrades[upgradeKey];
+    const cost = getUpgradeCost(upgradeKey, currentLevel);
+
+    if (progress.foodCoins < cost) {
+      showToast('⚠️ Not enough coins!', 'danger');
+      return;
+    }
+
+    // Deduct coins and upgrade
+    progress.foodCoins -= cost;
+    progress.upgrades[upgradeKey]++;
+
+    // Update click power for clickPower upgrade
+    if (upgradeKey === 'clickPower') {
+      progress.clickPower = 1 + UPGRADES.clickPower.getBonus(progress.upgrades.clickPower);
+    }
+
+    saveUserProgress(progress);
+    showToast(`✅ Upgraded ${UPGRADES[upgradeKey].name}!`, 'success');
+    renderGameStats();
+    renderUpgrades();
+  }
+
+  function buyLootBox() {
+    const progress = getUserProgress();
+    const cost = 100;
+
+    if (progress.foodCoins < cost) {
+      showToast('⚠️ Not enough coins!', 'danger');
+      return;
+    }
+
+    progress.foodCoins -= cost;
+    progress.lootBoxes++;
+    saveUserProgress(progress);
+
+    showToast('📦 Loot box purchased!', 'success');
+    renderGameStats();
+    updateLootBoxDisplay();
+  }
+
+  function buyXP() {
+    const progress = getUserProgress();
+    const cost = 50;
+
+    if (progress.foodCoins < cost) {
+      showToast('⚠️ Not enough coins!', 'danger');
+      return;
+    }
+
+    progress.foodCoins -= cost;
+    saveUserProgress(progress);
+
+    awardXP(50, 'Purchased with coins');
+    renderGameStats();
+  }
+
+  function renderGameStats() {
+    const progress = getUserProgress();
+
+    $('#gameFoodCoins').textContent = Math.floor(progress.foodCoins).toLocaleString();
+    $('#gameClickPower').textContent = progress.clickPower;
+    $('#gameTotalClicks').textContent = progress.totalClicks.toLocaleString();
+
+    const coinsPerSec = progress.upgrades.autoClicker > 0
+      ? UPGRADES.autoClicker.getBonus(progress.upgrades.autoClicker)
+      : 0;
+    $('#gameCoinsPerSec').textContent = coinsPerSec;
+  }
+
+  function renderUpgrades() {
+    const progress = getUserProgress();
+    const container = $('#upgradesContainer');
+
+    container.innerHTML = Object.entries(UPGRADES).map(([key, upgrade]) => {
+      const currentLevel = progress.upgrades[key];
+      const cost = getUpgradeCost(key, currentLevel);
+      const canAfford = progress.foodCoins >= cost;
+      const currentBonus = upgrade.getBonus(currentLevel);
+      const nextBonus = upgrade.getNextBonus(currentLevel);
+
+      return `
+        <div class="upgrade-card ${!canAfford ? 'disabled' : ''}" data-upgrade="${key}">
+          <div class="upgrade-header">
+            <div class="upgrade-icon">${upgrade.icon}</div>
+            <div class="upgrade-level">Level ${currentLevel}</div>
+          </div>
+          <div class="upgrade-name">${upgrade.name}</div>
+          <div class="upgrade-description">
+            ${upgrade.description}
+            <br>
+            <span style="color: var(--accent);">Current: +${currentBonus} → Next: +${nextBonus}</span>
+          </div>
+          <div class="upgrade-cost">
+            <span>🪙</span>
+            <span>${cost.toLocaleString()}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Add click handlers
+    $$('.upgrade-card', container).forEach(card => {
+      if (!card.classList.contains('disabled')) {
+        card.addEventListener('click', () => {
+          const upgradeKey = card.dataset.upgrade;
+          buyUpgrade(upgradeKey);
+        });
+      }
+    });
+  }
+
+  function initClickerGame() {
+    // Process offline auto-clicker earnings
+    processAutoClicker();
+
+    // Set up auto-clicker interval (every second)
+    setInterval(() => {
+      processAutoClicker();
+      renderGameStats();
+    }, 1000);
+
+    // Click button handler
+    const clickButton = $('#clickButton');
+    if (clickButton) {
+      clickButton.addEventListener('click', handleClick);
+    }
+
+    // Shop button handlers
+    const buyLootBoxBtn = $('#buyLootBox button');
+    if (buyLootBoxBtn) {
+      buyLootBoxBtn.addEventListener('click', buyLootBox);
+    }
+
+    const buyXPBtn = $('#buyXP button');
+    if (buyXPBtn) {
+      buyXPBtn.addEventListener('click', buyXP);
+    }
+
+    // Initial render
+    renderGameStats();
+    renderUpgrades();
   }
 
   function awardXP(amount, reason) {
@@ -2205,6 +2711,9 @@
 
   // Initialize loot box display
   updateLootBoxDisplay();
+
+  // Initialize clicker game
+  initClickerGame();
 
   // Persist some state when leaving
   window.addEventListener('beforeunload', () => {
