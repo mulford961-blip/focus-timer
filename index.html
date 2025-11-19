@@ -212,6 +212,13 @@
       align-items: flex-start;
       gap: 16px;
     }
+    header > div:last-child {
+      width: 100%;
+    }
+    #xpDisplay {
+      min-width: 100% !important;
+      width: 100%;
+    }
     .title {
       font-size: 22px;
     }
@@ -589,6 +596,22 @@
         <div class="sub">A no-login, one-page productivity tool. Your data saves in your browser.</div>
       </div>
       <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+        <!-- XP & Level Display -->
+        <div id="xpDisplay" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; min-width: 200px;">
+          <div style="flex: 1;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <span style="font-weight: 700; font-size: 14px; color: var(--accent);">Level <span id="userLevel">1</span></span>
+              <span style="font-size: 12px; color: var(--muted);"><span id="currentXP">0</span> / <span id="nextLevelXP">100</span> XP</span>
+            </div>
+            <div style="width: 100%; height: 6px; background: var(--bg2); border-radius: 3px; overflow: hidden;">
+              <div id="xpProgressBar" style="height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); width: 0%; transition: width 0.5s ease;"></div>
+            </div>
+          </div>
+          <button id="rewardsBtn" class="ghost" style="padding: 6px 10px; font-size: 18px; line-height: 1;">
+            🎁
+          </button>
+        </div>
+
         <button id="themeToggle" class="ghost" style="padding: 8px 14px;">
           <span id="themeIcon">🌙</span>
         </button>
@@ -757,6 +780,324 @@
     set(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
   };
 
+  // ---------- XP & Leveling System ----------
+  const XP_REWARDS = {
+    SESSION_BASE: 50,           // Base XP for completing a session
+    SESSION_PER_MIN: 2,         // Additional XP per minute
+    TASK_COMPLETE: 20,          // XP for completing a task
+    REFLECTION: 25              // Bonus XP for adding reflection
+  };
+
+  const LEVEL_THRESHOLDS = [
+    0,      // Level 1
+    100,    // Level 2
+    250,    // Level 3
+    500,    // Level 4
+    1000,   // Level 5
+    2000,   // Level 6
+    3500,   // Level 7
+    5500,   // Level 8
+    8000,   // Level 9
+    11000,  // Level 10
+    15000,  // Level 11
+    20000,  // Level 12
+    26000,  // Level 13
+    33000,  // Level 14
+    41000,  // Level 15
+    50000   // Level 16
+  ];
+
+  const REWARDS = {
+    themes: [
+      { level: 1, id: 'default', name: 'Default', unlocked: true },
+      { level: 3, id: 'ocean', name: 'Ocean Blue', unlocked: false },
+      { level: 5, id: 'forest', name: 'Forest Green', unlocked: false },
+      { level: 7, id: 'sunset', name: 'Sunset Orange', unlocked: false },
+      { level: 10, id: 'galaxy', name: 'Galaxy Purple', unlocked: false }
+    ],
+    sounds: [
+      { level: 1, id: 'default', name: 'Default Chime', unlocked: true },
+      { level: 4, id: 'bell', name: 'Temple Bell', unlocked: false },
+      { level: 6, id: 'gong', name: 'Meditation Gong', unlocked: false },
+      { level: 8, id: 'harp', name: 'Harp Arpeggio', unlocked: false }
+    ],
+    icons: [
+      { level: 1, id: 'default', name: 'Default', emoji: '⏱️', unlocked: true },
+      { level: 2, id: 'fire', name: 'Fire', emoji: '🔥', unlocked: false },
+      { level: 5, id: 'rocket', name: 'Rocket', emoji: '🚀', unlocked: false },
+      { level: 8, id: 'star', name: 'Star', emoji: '⭐', unlocked: false },
+      { level: 12, id: 'trophy', name: 'Trophy', emoji: '🏆', unlocked: false }
+    ]
+  };
+
+  function getUserProgress() {
+    return store.get('userProgress', {
+      xp: 0,
+      level: 1,
+      selectedTheme: 'default',
+      selectedSound: 'default',
+      selectedIcon: 'default'
+    });
+  }
+
+  function saveUserProgress(progress) {
+    store.set('userProgress', progress);
+  }
+
+  function calculateLevel(xp) {
+    let level = 1;
+    for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
+      if (xp >= LEVEL_THRESHOLDS[i]) {
+        level = i + 1;
+        break;
+      }
+    }
+    return level;
+  }
+
+  function getXPForNextLevel(currentLevel) {
+    if (currentLevel >= LEVEL_THRESHOLDS.length) {
+      return LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1];
+    }
+    return LEVEL_THRESHOLDS[currentLevel];
+  }
+
+  function awardXP(amount, reason) {
+    const progress = getUserProgress();
+    const oldLevel = progress.level;
+    progress.xp += amount;
+    progress.level = calculateLevel(progress.xp);
+    saveUserProgress(progress);
+
+    // Show XP gained notification
+    showToast(`+${amount} XP: ${reason}`, 'success');
+
+    // Check for level up
+    if (progress.level > oldLevel) {
+      showLevelUpModal(progress.level, oldLevel);
+    }
+
+    renderXPBar();
+    return progress;
+  }
+
+  function showLevelUpModal(newLevel, oldLevel) {
+    // Check for newly unlocked rewards
+    const newRewards = [];
+
+    REWARDS.themes.forEach(theme => {
+      if (theme.level === newLevel) {
+        newRewards.push({ type: 'Theme', name: theme.name });
+      }
+    });
+
+    REWARDS.sounds.forEach(sound => {
+      if (sound.level === newLevel) {
+        newRewards.push({ type: 'Sound', name: sound.name });
+      }
+    });
+
+    REWARDS.icons.forEach(icon => {
+      if (icon.level === newLevel) {
+        newRewards.push({ type: 'Icon', name: icon.name });
+      }
+    });
+
+    const rewardsHtml = newRewards.length > 0
+      ? `
+        <div style="margin-top: 16px; padding: 12px; background: var(--bg2); border-radius: 8px;">
+          <strong style="color: var(--accent);">🎁 New Rewards Unlocked!</strong>
+          <ul style="margin: 8px 0; padding-left: 20px;">
+            ${newRewards.map(r => `<li>${r.type}: ${r.name}</li>`).join('')}
+          </ul>
+        </div>
+      `
+      : '';
+
+    const modal = document.createElement('div');
+    modal.innerHTML = `
+      <div class="modal-overlay">
+        <div class="modal" style="text-align: center;">
+          <div style="font-size: 64px; margin-bottom: 16px;">🎉</div>
+          <h2 style="font-size: 32px; margin-bottom: 8px;">Level Up!</h2>
+          <p style="font-size: 24px; color: var(--accent); font-weight: 700; margin-bottom: 20px;">
+            Level ${oldLevel} → Level ${newLevel}
+          </p>
+          ${rewardsHtml}
+          <div class="modal-actions" style="margin-top: 24px;">
+            <button class="primary" id="closeLevelUp">Awesome!</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    $('#closeLevelUp', modal).addEventListener('click', () => {
+      modal.remove();
+    });
+
+    $('.modal-overlay', modal).addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal-overlay')) {
+        modal.remove();
+      }
+    });
+  }
+
+  function renderXPBar() {
+    const progress = getUserProgress();
+    const currentLevel = progress.level;
+    const currentXP = progress.xp;
+
+    // Get XP thresholds for current and next level
+    const currentLevelXP = currentLevel > 1 ? LEVEL_THRESHOLDS[currentLevel - 1] : 0;
+    const nextLevelXP = getXPForNextLevel(currentLevel);
+
+    // Calculate XP progress within current level
+    const xpIntoLevel = currentXP - currentLevelXP;
+    const xpNeededForLevel = nextLevelXP - currentLevelXP;
+    const percentProgress = (xpIntoLevel / xpNeededForLevel) * 100;
+
+    // Update UI
+    $('#userLevel').textContent = currentLevel;
+    $('#currentXP').textContent = xpIntoLevel;
+    $('#nextLevelXP').textContent = xpNeededForLevel;
+    $('#xpProgressBar').style.width = `${Math.min(100, percentProgress)}%`;
+  }
+
+  function showRewardsModal() {
+    const progress = getUserProgress();
+    const currentLevel = progress.level;
+
+    // Determine which rewards are unlocked
+    const unlockedThemes = REWARDS.themes.filter(t => t.level <= currentLevel);
+    const unlockedSounds = REWARDS.sounds.filter(s => s.level <= currentLevel);
+    const unlockedIcons = REWARDS.icons.filter(i => i.level <= currentLevel);
+
+    const lockedThemes = REWARDS.themes.filter(t => t.level > currentLevel);
+    const lockedSounds = REWARDS.sounds.filter(s => s.level > currentLevel);
+    const lockedIcons = REWARDS.icons.filter(i => i.level > currentLevel);
+
+    const modal = document.createElement('div');
+    modal.innerHTML = `
+      <div class="modal-overlay">
+        <div class="modal">
+          <h2>🎁 Rewards & Customization</h2>
+
+          <div class="modal-section">
+            <label>Timer Icons (Coming Soon)</label>
+            <span class="muted">Unlock new icons by leveling up</span>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; margin-top: 12px;">
+              ${unlockedIcons.map(icon => `
+                <button class="reward-item ${progress.selectedIcon === icon.id ? 'selected' : ''}" data-type="icon" data-id="${icon.id}" style="padding: 12px; border: 2px solid var(--line); border-radius: 8px; background: var(--bg2); cursor: pointer; text-align: center; transition: all 0.2s;">
+                  <div style="font-size: 24px; margin-bottom: 4px;">${icon.emoji}</div>
+                  <div style="font-size: 11px; font-weight: 600;">${icon.name}</div>
+                </button>
+              `).join('')}
+              ${lockedIcons.map(icon => `
+                <div style="padding: 12px; border: 2px solid var(--line); border-radius: 8px; background: var(--bg2); opacity: 0.4; text-align: center;">
+                  <div style="font-size: 24px; margin-bottom: 4px;">🔒</div>
+                  <div style="font-size: 11px; font-weight: 600;">Lv ${icon.level}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="modal-section">
+            <label>Color Themes (Coming Soon)</label>
+            <span class="muted">Unlock new color schemes</span>
+            <div style="display: grid; gap: 8px; margin-top: 12px;">
+              ${unlockedThemes.map(theme => `
+                <button class="reward-item ${progress.selectedTheme === theme.id ? 'selected' : ''}" data-type="theme" data-id="${theme.id}" style="padding: 12px; border: 2px solid var(--line); border-radius: 8px; background: var(--bg2); cursor: pointer; text-align: left; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-weight: 600;">${theme.name}</span>
+                  <span style="font-size: 18px;">✓</span>
+                </button>
+              `).join('')}
+              ${lockedThemes.map(theme => `
+                <div style="padding: 12px; border: 2px solid var(--line); border-radius: 8px; background: var(--bg2); opacity: 0.4; display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-weight: 600;">${theme.name}</span>
+                  <span style="font-size: 12px; color: var(--muted);">Level ${theme.level}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="modal-section">
+            <label>Notification Sounds (Coming Soon)</label>
+            <span class="muted">Unlock new notification sounds</span>
+            <div style="display: grid; gap: 8px; margin-top: 12px;">
+              ${unlockedSounds.map(sound => `
+                <button class="reward-item ${progress.selectedSound === sound.id ? 'selected' : ''}" data-type="sound" data-id="${sound.id}" style="padding: 12px; border: 2px solid var(--line); border-radius: 8px; background: var(--bg2); cursor: pointer; text-align: left; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-weight: 600;">${sound.name}</span>
+                  <span style="font-size: 18px;">🔊</span>
+                </button>
+              `).join('')}
+              ${lockedSounds.map(sound => `
+                <div style="padding: 12px; border: 2px solid var(--line); border-radius: 8px; background: var(--bg2); opacity: 0.4; display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-weight: 600;">${sound.name}</span>
+                  <span style="font-size: 12px; color: var(--muted);">Level ${sound.level}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button class="primary" id="closeRewards">Close</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Add selection styling
+    const style = document.createElement('style');
+    style.textContent = `
+      .reward-item.selected {
+        border-color: var(--accent) !important;
+        background: var(--card) !important;
+      }
+      .reward-item:hover {
+        border-color: var(--accent);
+        background: var(--card);
+      }
+    `;
+    modal.appendChild(style);
+
+    // Handle reward selection
+    $$('.reward-item', modal).forEach(item => {
+      item.addEventListener('click', () => {
+        const type = item.dataset.type;
+        const id = item.dataset.id;
+
+        // Update progress
+        if (type === 'theme') progress.selectedTheme = id;
+        if (type === 'sound') progress.selectedSound = id;
+        if (type === 'icon') progress.selectedIcon = id;
+
+        saveUserProgress(progress);
+
+        // Update UI
+        $$('.reward-item', modal).forEach(i => {
+          if (i.dataset.type === type) {
+            i.classList.remove('selected');
+          }
+        });
+        item.classList.add('selected');
+
+        showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} selected!`, 'success');
+      });
+    });
+
+    $('#closeRewards', modal).addEventListener('click', () => {
+      modal.remove();
+    });
+
+    $('.modal-overlay', modal).addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal-overlay')) {
+        modal.remove();
+      }
+    });
+  }
+
   // ---------- Theme Toggle ----------
   const themeToggle = $('#themeToggle');
   const themeIcon = $('#themeIcon');
@@ -869,6 +1210,16 @@
       text: t.text
     }));
 
+    // Award XP for session completion
+    const sessionXP = XP_REWARDS.SESSION_BASE + (currentSession.duration * XP_REWARDS.SESSION_PER_MIN);
+    awardXP(sessionXP, `${currentSession.duration}min session`);
+
+    // Award XP for tasks completed during session
+    if (completedDuringSession.length > 0) {
+      const taskXP = completedDuringSession.length * XP_REWARDS.TASK_COMPLETE;
+      awardXP(taskXP, `${completedDuringSession.length} task${completedDuringSession.length > 1 ? 's' : ''} completed`);
+    }
+
     // Only show reflection modal for focus sessions, not breaks
     if (currentSession.type === 'Focus Session') {
       showReflectionModal(currentSession);
@@ -971,6 +1322,9 @@
         blockers: blockers,
         timestamp: Date.now()
       };
+
+      // Award bonus XP for completing reflection
+      awardXP(XP_REWARDS.REFLECTION, 'Session reflection');
 
       modal.style.display = 'none';
       saveSession(session);
@@ -1220,6 +1574,10 @@
         // Track completion timestamp
         if (cb.checked && !wasCompleted) {
           tasks[i].completedAt = Date.now();
+          // Award XP for completing task (only if not already in a session to avoid double rewards)
+          if (!currentSession) {
+            awardXP(XP_REWARDS.TASK_COMPLETE, 'Task completed');
+          }
         } else if (!cb.checked && wasCompleted) {
           tasks[i].completedAt = null;
         }
@@ -1309,6 +1667,10 @@
   renderAnalytics();
   renderSessionHistory();
   render();
+  renderXPBar(); // Initialize XP bar
+
+  // Rewards button event listener
+  $('#rewardsBtn').addEventListener('click', showRewardsModal);
 
   // Persist some state when leaving
   window.addEventListener('beforeunload', () => {
