@@ -254,6 +254,33 @@
     font-size: 14px;
     color: var(--muted);
   }
+
+  /* AI Tools Shortcuts */
+  .aiShortcut {
+    text-decoration: none;
+    color: inherit;
+  }
+  .aiShortcut .card {
+    padding: 28px;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+  .aiShortcut .card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+  }
+  .aiToolsGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  @media (max-width: 600px) {
+    .aiToolsGrid {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>
 </head>
 <body>
@@ -273,6 +300,7 @@
     <div class="tabs">
       <button class="tab active" data-tab="focus">Focus & Productivity</button>
       <button class="tab" data-tab="games">Mini Games</button>
+      <button class="tab" data-tab="ai">AI Tools</button>
     </div>
 
     <!-- Focus Tab Content -->
@@ -387,6 +415,38 @@
           </div>
         </section>
       </div>
+    </div>
+
+    <!-- AI Tools Tab Content -->
+    <div id="aiTab" class="tabContent">
+      <section class="card" style="text-align: center; padding: 32px;">
+        <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 12px;">AI Shortcuts</h2>
+        <p style="color: var(--muted); margin-bottom: 32px;">Quick access to AI assistants</p>
+
+        <div class="aiToolsGrid">
+          <!-- Claude Shortcut -->
+          <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" class="aiShortcut">
+            <div class="card">
+              <div style="font-size: 48px; margin-bottom: 12px;">🤖</div>
+              <div style="font-size: 20px; font-weight: 700; margin-bottom: 8px;">Claude</div>
+              <div style="color: var(--muted); font-size: 14px;">Anthropic's AI assistant</div>
+            </div>
+          </a>
+
+          <!-- ChatGPT Shortcut -->
+          <a href="https://chat.openai.com" target="_blank" rel="noopener noreferrer" class="aiShortcut">
+            <div class="card">
+              <div style="font-size: 48px; margin-bottom: 12px;">💬</div>
+              <div style="font-size: 20px; font-weight: 700; margin-bottom: 8px;">ChatGPT</div>
+              <div style="color: var(--muted); font-size: 14px;">OpenAI's conversational AI</div>
+            </div>
+          </a>
+        </div>
+
+        <p style="color: var(--muted); font-size: 13px; margin-top: 32px;">
+          Links open in new tabs so you can keep your timer running
+        </p>
+      </section>
     </div>
 
   </div>
