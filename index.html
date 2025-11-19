@@ -476,117 +476,6 @@
     flex: 1;
   }
 
-  /* Session History Styles */
-  .session-item {
-    background: var(--bg2);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 12px;
-    transition: all 0.2s ease;
-  }
-
-  .session-item:hover {
-    border-color: var(--accent);
-    transform: translateX(4px);
-  }
-
-  .session-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-  }
-
-  .session-type {
-    font-weight: 700;
-    font-size: 16px;
-    color: var(--accent);
-  }
-
-  .session-duration {
-    font-size: 14px;
-    color: var(--muted);
-    font-weight: 600;
-  }
-
-  .session-time {
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 8px;
-  }
-
-  .session-tasks {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid var(--line);
-  }
-
-  .session-tasks-title {
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 6px;
-    color: var(--muted);
-  }
-
-  .session-task-item {
-    font-size: 13px;
-    color: var(--ink);
-    padding: 4px 0;
-    padding-left: 16px;
-    position: relative;
-  }
-
-  .session-task-item::before {
-    content: '✓';
-    position: absolute;
-    left: 0;
-    color: var(--accent);
-    font-weight: 700;
-  }
-
-  .session-reflection {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid var(--line);
-  }
-
-  .session-reflection-title {
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 6px;
-    color: var(--muted);
-  }
-
-  .session-reflection-text {
-    font-size: 13px;
-    color: var(--ink);
-    line-height: 1.5;
-  }
-
-  .session-rating {
-    display: inline-flex;
-    gap: 4px;
-    margin-top: 8px;
-  }
-
-  .star {
-    color: var(--accent);
-    font-size: 16px;
-  }
-
-  .empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--muted);
-  }
-
-  .empty-state-icon {
-    font-size: 48px;
-    margin-bottom: 12px;
-    opacity: 0.5;
-  }
-
   /* Loot Box & Rarity Styles */
   .rarity-common { border-color: #9ca3af !important; color: #9ca3af; }
   .rarity-rare { border-color: #3b82f6 !important; color: #3b82f6; }
@@ -941,7 +830,6 @@
     <div class="tabs">
       <button class="tab active" data-tab="focus">Focus & Productivity</button>
       <button class="tab" data-tab="game">Food Game</button>
-      <button class="tab" data-tab="history">Session History</button>
       <button class="tab" data-tab="ai">AI Tools</button>
     </div>
 
@@ -1113,17 +1001,6 @@
         </section>
 
       </div>
-    </div>
-
-    <!-- Session History Tab Content -->
-    <div id="historyTab" class="tabContent">
-      <section class="card">
-        <strong>Session History</strong>
-        <p class="muted" style="margin-top: 8px; margin-bottom: 16px;">
-          Track your focus sessions, completed tasks, and reflections.
-        </p>
-        <div id="sessionHistory"></div>
-      </section>
     </div>
 
     <!-- AI Tools Tab Content -->
@@ -2243,7 +2120,7 @@
       sessions.length = 50;
     }
     store.set('sessions', sessions);
-    renderSessionHistory();
+    // renderSessionHistory(); // Removed - history tab disabled
   }
 
   // ---------- Reflection Modal ----------
@@ -2349,7 +2226,8 @@
   }
 
   // ---------- Session History Display ----------
-  function renderSessionHistory() {
+  // Removed - history tab disabled
+  /* function renderSessionHistory() {
     const sessions = store.get('sessions', []);
     const container = $('#sessionHistory');
 
@@ -2432,7 +2310,7 @@
         </div>
       `;
     }).join('');
-  }
+  } */
 
   function format(ms) {
     const m = Math.floor(ms/60);
@@ -2692,7 +2570,7 @@
   migrateLootBoxSystem();
   renderTasks();
   renderAnalytics();
-  renderSessionHistory();
+  // renderSessionHistory(); // Removed - history tab disabled
   render();
   renderXPBar(); // Initialize XP bar
 
