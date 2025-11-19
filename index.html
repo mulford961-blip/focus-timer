@@ -75,6 +75,29 @@
   .tog{display:inline-flex;align-items:center;gap:8px}
   a.link{color:var(--accent);text-decoration:none;border-bottom:1px dashed rgba(0,194,111,.5)}
   footer{color:var(--muted);text-align:center;font-size:12px}
+
+  /* Quote Section */
+  .quoteCard {
+    text-align: center;
+    padding: 24px;
+  }
+  .quoteText {
+    font-size: 18px;
+    font-weight: 600;
+    font-style: italic;
+    line-height: 1.6;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+  .quoteAuthor {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+  .newQuoteBtn {
+    font-size: 13px;
+    padding: 8px 16px;
+  }
 </style>
 </head>
 <body>
@@ -89,6 +112,12 @@
         <label for="soundToggle" class="small">Chime on session end</label>
       </div>
     </header>
+
+    <section class="card quoteCard">
+      <div class="quoteText" id="quoteText">"The secret of getting ahead is getting started."</div>
+      <div class="quoteAuthor" id="quoteAuthor">— Mark Twain</div>
+      <button class="ghost newQuoteBtn" id="newQuoteBtn">New Quote</button>
+    </section>
 
     <section class="card timer">
       <div class="ringWrap">
@@ -302,6 +331,43 @@
   window.addEventListener('beforeunload', () => {
     store.set('settings', { mins: totalSecs/60, sound: $('#soundToggle').checked });
   });
+
+  // ---------- Random Quote Generator ----------
+  const quotes = [
+    { text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
+    { text: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
+    { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+    { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
+    { text: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill" },
+    { text: "Don't watch the clock; do what it does. Keep going.", author: "Sam Levenson" },
+    { text: "The future depends on what you do today.", author: "Mahatma Gandhi" },
+    { text: "Focus on being productive instead of busy.", author: "Tim Ferriss" },
+    { text: "You don't have to be great to start, but you have to start to be great.", author: "Zig Ziglar" },
+    { text: "The way to get started is to quit talking and begin doing.", author: "Walt Disney" },
+    { text: "Productivity is never an accident. It is always the result of a commitment to excellence.", author: "Paul J. Meyer" },
+    { text: "Concentrate all your thoughts upon the work in hand. The sun's rays do not burn until brought to a focus.", author: "Alexander Graham Bell" },
+    { text: "You may delay, but time will not.", author: "Benjamin Franklin" },
+    { text: "Action is the foundational key to all success.", author: "Pablo Picasso" },
+    { text: "The only limit to our realization of tomorrow will be our doubts of today.", author: "Franklin D. Roosevelt" },
+    { text: "Start where you are. Use what you have. Do what you can.", author: "Arthur Ashe" },
+    { text: "Either you run the day or the day runs you.", author: "Jim Rohn" },
+    { text: "Time is what we want most, but what we use worst.", author: "William Penn" },
+    { text: "The key is not to prioritize what's on your schedule, but to schedule your priorities.", author: "Stephen Covey" },
+    { text: "Amateurs sit and wait for inspiration, the rest of us just get up and go to work.", author: "Stephen King" }
+  ];
+
+  const quoteText = $('#quoteText');
+  const quoteAuthor = $('#quoteAuthor');
+  const newQuoteBtn = $('#newQuoteBtn');
+
+  function displayRandomQuote() {
+    const randomIndex = Math.floor(Math.random() * quotes.length);
+    const quote = quotes[randomIndex];
+    quoteText.textContent = `"${quote.text}"`;
+    quoteAuthor.textContent = `— ${quote.author}`;
+  }
+
+  newQuoteBtn.addEventListener('click', displayRandomQuote);
 })();
 </script>
 </body>
