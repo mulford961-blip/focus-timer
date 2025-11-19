@@ -97,6 +97,45 @@
   a.link{color:var(--accent);text-decoration:none;border-bottom:1px dashed rgba(0,194,111,.5)}
   footer{color:var(--muted);text-align:center;font-size:12px}
 
+  /* Analytics Styles */
+  .analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+  }
+  .stat-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
   /* Tabs */
   .tabs {
     display: flex;
@@ -404,6 +443,27 @@
     <section class="grid">
       <div class="card">
         <strong>Quick Tasks</strong>
+
+        <!-- Analytics Summary -->
+        <div class="analytics-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="statTotal">0</div>
+            <div class="stat-label">Total Tasks</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statCompleted">0</div>
+            <div class="stat-label">Completed</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statToday">0</div>
+            <div class="stat-label">Today</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statRate">0%</div>
+            <div class="stat-label">Rate</div>
+          </div>
+        </div>
+
         <div class="taskRow">
           <input id="taskInput" type="text" placeholder="Add a task and press Enter…" />
           <button id="addTask">Add</button>
@@ -606,6 +666,66 @@
   $('#resetBtn').addEventListener('click', reset);
 
   // ---------- Tasks ----------
+  // Migrate existing tasks to new format
+  function migrateTasks() {
+    const tasks = store.get('tasks', []);
+    let migrated = false;
+
+    const updatedTasks = tasks.map(task => {
+      // Check if task needs migration (old format without id/timestamps)
+      if (!task.id) {
+        migrated = true;
+        return {
+          id: generateId(),
+          text: task.text,
+          done: task.done || false,
+          createdAt: Date.now() - (7 * 24 * 60 * 60 * 1000), // Default to 7 days ago
+          completedAt: task.done ? Date.now() - (1 * 24 * 60 * 60 * 1000) : null // If done, say completed yesterday
+        };
+      }
+      return task;
+    });
+
+    if (migrated) {
+      store.set('tasks', updatedTasks);
+    }
+  }
+
+  // Generate unique ID
+  function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+  }
+
+  // Calculate analytics
+  function calculateAnalytics() {
+    const tasks = store.get('tasks', []);
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+    const totalTasks = tasks.length;
+    const completedTasks = tasks.filter(t => t.done).length;
+    const tasksCompletedToday = tasks.filter(t =>
+      t.completedAt && t.completedAt >= todayStart
+    ).length;
+    const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+    return {
+      total: totalTasks,
+      completed: completedTasks,
+      today: tasksCompletedToday,
+      rate: completionRate
+    };
+  }
+
+  // Render analytics
+  function renderAnalytics() {
+    const stats = calculateAnalytics();
+    $('#statTotal').textContent = stats.total;
+    $('#statCompleted').textContent = stats.completed;
+    $('#statToday').textContent = stats.today;
+    $('#statRate').textContent = stats.rate + '%';
+  }
+
   function renderTasks() {
     const tasks = store.get('tasks', []);
     const list = $('#taskList');
@@ -613,19 +733,46 @@
     tasks.forEach((t, i) => {
       const row = document.createElement('div'); row.className = 'taskItem' + (t.done?' done':'');
       const cb = document.createElement('input'); cb.type = 'checkbox'; cb.className='checkbox'; cb.checked = !!t.done;
-      cb.addEventListener('change', () => { tasks[i].done = cb.checked; store.set('tasks', tasks); renderTasks(); });
+      cb.addEventListener('change', () => {
+        const wasCompleted = tasks[i].done;
+        tasks[i].done = cb.checked;
+        // Track completion timestamp
+        if (cb.checked && !wasCompleted) {
+          tasks[i].completedAt = Date.now();
+        } else if (!cb.checked && wasCompleted) {
+          tasks[i].completedAt = null;
+        }
+        store.set('tasks', tasks);
+        renderTasks();
+        renderAnalytics();
+      });
       const label = document.createElement('div'); label.textContent = t.text;
       const del = document.createElement('button'); del.className='ghost small'; del.textContent='Delete';
-      del.addEventListener('click', () => { tasks.splice(i,1); store.set('tasks', tasks); renderTasks(); });
+      del.addEventListener('click', () => {
+        tasks.splice(i,1);
+        store.set('tasks', tasks);
+        renderTasks();
+        renderAnalytics();
+      });
       row.append(cb, label, del);
       list.append(row);
     });
+    renderAnalytics();
   }
+
   function addTaskFromInput() {
     const v = $('#taskInput').value.trim();
     if (!v) return;
     const tasks = store.get('tasks', []);
-    tasks.unshift({ text: v, done: false });
+    // Create enhanced task with metadata
+    const newTask = {
+      id: generateId(),
+      text: v,
+      done: false,
+      createdAt: Date.now(),
+      completedAt: null
+    };
+    tasks.unshift(newTask);
     store.set('tasks', tasks);
     $('#taskInput').value = '';
     renderTasks();
@@ -638,6 +785,7 @@
     const tasks = store.get('tasks', []).filter(t => !t.done);
     store.set('tasks', tasks);
     renderTasks();
+    renderAnalytics();
     const removed = before - tasks.length;
     if (removed > 0) showToast(`🗑️ Cleared ${removed} completed task${removed > 1 ? 's' : ''}`, 'success');
   });
@@ -646,6 +794,7 @@
     const count = store.get('tasks', []).length;
     store.set('tasks', []);
     renderTasks();
+    renderAnalytics();
     if (count > 0) showToast(`🗑️ Cleared ${count} task${count > 1 ? 's' : ''}`, 'success');
   });
 
@@ -672,7 +821,11 @@
   const saved = store.get('settings', { mins: 25, sound: false });
   $('#soundToggle').checked = !!saved.sound;
   setLength(saved.mins || 25);
+
+  // Migrate tasks on load
+  migrateTasks();
   renderTasks();
+  renderAnalytics();
   render();
 
   // Persist some state when leaving
