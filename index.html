@@ -374,6 +374,211 @@
   html {
     scroll-behavior: smooth;
   }
+
+  /* Modal/Dialog Styles */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeIn 0.3s ease;
+    padding: 20px;
+  }
+
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideIn 0.3s ease;
+    padding: 28px;
+  }
+
+  .modal h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .modal-section {
+    margin-bottom: 20px;
+  }
+
+  .modal-section label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--ink);
+  }
+
+  .modal-section .muted {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+  }
+
+  .rating-container {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+  }
+
+  .rating-btn {
+    flex: 1;
+    padding: 12px;
+    border: 2px solid var(--line);
+    background: var(--bg2);
+    color: var(--ink);
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+
+  .rating-btn:hover {
+    border-color: var(--accent);
+    background: var(--card);
+  }
+
+  .rating-btn.selected {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #000;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 28px;
+  }
+
+  .modal-actions button {
+    flex: 1;
+  }
+
+  /* Session History Styles */
+  .session-item {
+    background: var(--bg2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+  }
+
+  .session-item:hover {
+    border-color: var(--accent);
+    transform: translateX(4px);
+  }
+
+  .session-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .session-type {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--accent);
+  }
+
+  .session-duration {
+    font-size: 14px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .session-time {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .session-tasks {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+  }
+
+  .session-tasks-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--muted);
+  }
+
+  .session-task-item {
+    font-size: 13px;
+    color: var(--ink);
+    padding: 4px 0;
+    padding-left: 16px;
+    position: relative;
+  }
+
+  .session-task-item::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .session-reflection {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+  }
+
+  .session-reflection-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--muted);
+  }
+
+  .session-reflection-text {
+    font-size: 13px;
+    color: var(--ink);
+    line-height: 1.5;
+  }
+
+  .session-rating {
+    display: inline-flex;
+    gap: 4px;
+    margin-top: 8px;
+  }
+
+  .star {
+    color: var(--accent);
+    font-size: 16px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+  }
+
+  .empty-state-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
 </style>
 </head>
 <body>
@@ -397,6 +602,7 @@
     <!-- Tab Navigation -->
     <div class="tabs">
       <button class="tab active" data-tab="focus">Focus & Productivity</button>
+      <button class="tab" data-tab="history">Session History</button>
       <button class="tab" data-tab="ai">AI Tools</button>
     </div>
 
@@ -490,6 +696,17 @@
     </section>
     </div>
 
+    <!-- Session History Tab Content -->
+    <div id="historyTab" class="tabContent">
+      <section class="card">
+        <strong>Session History</strong>
+        <p class="muted" style="margin-top: 8px; margin-bottom: 16px;">
+          Track your focus sessions, completed tasks, and reflections.
+        </p>
+        <div id="sessionHistory"></div>
+      </section>
+    </div>
+
     <!-- AI Tools Tab Content -->
     <div id="aiTab" class="tabContent">
       <section class="card" style="text-align: center; padding: 32px;">
@@ -523,6 +740,9 @@
     </div>
 
   </div>
+
+  <!-- Reflection Modal (initially hidden) -->
+  <div id="reflectionModal" style="display: none;"></div>
 
 <script>
 (() => {
@@ -602,6 +822,258 @@
   const dash = 2 * Math.PI * 52; // circumference ≈ 327
   ring.setAttribute('stroke-dasharray', dash);
 
+  // ---------- Session Tracking ----------
+  let currentSession = null;
+
+  function generateSessionId() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+  }
+
+  function getSessionType(mins) {
+    if (mins === 5) return 'Short Break';
+    if (mins === 15) return 'Long Break';
+    return 'Focus Session';
+  }
+
+  function startSession() {
+    const tasks = store.get('tasks', []);
+    const sessionType = getSessionType(totalSecs / 60);
+
+    currentSession = {
+      id: generateSessionId(),
+      type: sessionType,
+      duration: totalSecs / 60,
+      startTime: Date.now(),
+      endTime: null,
+      tasksAtStart: tasks.map(t => ({ id: t.id, text: t.text, done: t.done })),
+      tasksCompleted: [],
+      notes: $('#notes').value,
+      reflection: null
+    };
+  }
+
+  function completeSession() {
+    if (!currentSession) return;
+
+    currentSession.endTime = Date.now();
+
+    // Find tasks completed during this session
+    const tasks = store.get('tasks', []);
+    const completedDuringSession = tasks.filter(t => {
+      const wasIncomplete = currentSession.tasksAtStart.find(ts => ts.id === t.id && !ts.done);
+      return wasIncomplete && t.done;
+    });
+
+    currentSession.tasksCompleted = completedDuringSession.map(t => ({
+      id: t.id,
+      text: t.text
+    }));
+
+    // Only show reflection modal for focus sessions, not breaks
+    if (currentSession.type === 'Focus Session') {
+      showReflectionModal(currentSession);
+    } else {
+      saveSession(currentSession);
+      currentSession = null;
+    }
+  }
+
+  function saveSession(session) {
+    const sessions = store.get('sessions', []);
+    sessions.unshift(session);
+    // Keep only last 50 sessions
+    if (sessions.length > 50) {
+      sessions.length = 50;
+    }
+    store.set('sessions', sessions);
+    renderSessionHistory();
+  }
+
+  // ---------- Reflection Modal ----------
+  function showReflectionModal(session) {
+    const modal = $('#reflectionModal');
+    let selectedRating = null;
+
+    const tasksCompletedList = session.tasksCompleted.length > 0
+      ? session.tasksCompleted.map(t => `<li>${t.text}</li>`).join('')
+      : '<li class="muted">No tasks completed during this session</li>';
+
+    modal.innerHTML = `
+      <div class="modal-overlay">
+        <div class="modal">
+          <h2>🎯 Session Complete!</h2>
+
+          <div class="modal-section">
+            <p><strong>Duration:</strong> ${session.duration} minutes</p>
+            <p><strong>Tasks completed:</strong></p>
+            <ul style="margin: 8px 0; padding-left: 20px;">
+              ${tasksCompletedList}
+            </ul>
+          </div>
+
+          <div class="modal-section">
+            <label>How focused were you?</label>
+            <span class="muted">Rate your focus level during this session</span>
+            <div class="rating-container">
+              <button class="rating-btn" data-rating="1">😔<br>Low</button>
+              <button class="rating-btn" data-rating="2">😐<br>Medium</button>
+              <button class="rating-btn" data-rating="3">😊<br>Good</button>
+              <button class="rating-btn" data-rating="4">🚀<br>Excellent</button>
+            </div>
+          </div>
+
+          <div class="modal-section">
+            <label>What did you accomplish?</label>
+            <span class="muted">Reflect on what you achieved during this session</span>
+            <textarea id="reflectionAccomplishments" rows="3" placeholder="E.g., Completed the API integration, fixed 3 bugs..."></textarea>
+          </div>
+
+          <div class="modal-section">
+            <label>Any blockers or insights?</label>
+            <span class="muted">Optional: Note any challenges or learnings</span>
+            <textarea id="reflectionBlockers" rows="3" placeholder="E.g., Struggled with authentication flow, need to research more..."></textarea>
+          </div>
+
+          <div class="modal-actions">
+            <button class="ghost" id="skipReflection">Skip</button>
+            <button class="primary" id="saveReflection">Save Reflection</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    modal.style.display = 'block';
+
+    // Rating button handlers
+    $$('.rating-btn', modal).forEach(btn => {
+      btn.addEventListener('click', () => {
+        $$('.rating-btn', modal).forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedRating = parseInt(btn.dataset.rating);
+      });
+    });
+
+    // Skip button
+    $('#skipReflection', modal).addEventListener('click', () => {
+      modal.style.display = 'none';
+      saveSession(session);
+      currentSession = null;
+    });
+
+    // Save button
+    $('#saveReflection', modal).addEventListener('click', () => {
+      const accomplishments = $('#reflectionAccomplishments', modal).value.trim();
+      const blockers = $('#reflectionBlockers', modal).value.trim();
+
+      session.reflection = {
+        rating: selectedRating,
+        accomplishments: accomplishments,
+        blockers: blockers,
+        timestamp: Date.now()
+      };
+
+      modal.style.display = 'none';
+      saveSession(session);
+      currentSession = null;
+      showToast('💭 Reflection saved!', 'success');
+    });
+
+    // Close on overlay click
+    $('.modal-overlay', modal).addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal-overlay')) {
+        modal.style.display = 'none';
+        saveSession(session);
+        currentSession = null;
+      }
+    });
+  }
+
+  // ---------- Session History Display ----------
+  function renderSessionHistory() {
+    const sessions = store.get('sessions', []);
+    const container = $('#sessionHistory');
+
+    if (sessions.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">⏱️</div>
+          <p>No sessions yet</p>
+          <p class="small muted">Complete a focus session to see it here</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = sessions.map(session => {
+      const startDate = new Date(session.startTime);
+      const endDate = session.endTime ? new Date(session.endTime) : null;
+      const dateStr = startDate.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+      const timeStr = startDate.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit'
+      });
+
+      const tasksHtml = session.tasksCompleted.length > 0
+        ? `
+          <div class="session-tasks">
+            <div class="session-tasks-title">Tasks Completed (${session.tasksCompleted.length})</div>
+            ${session.tasksCompleted.map(t => `
+              <div class="session-task-item">${t.text}</div>
+            `).join('')}
+          </div>
+        `
+        : '';
+
+      const reflectionHtml = session.reflection
+        ? `
+          <div class="session-reflection">
+            <div class="session-reflection-title">Reflection</div>
+            <div class="session-rating">
+              ${Array.from({ length: session.reflection.rating || 0 }, () => '<span class="star">★</span>').join('')}
+              ${Array.from({ length: 4 - (session.reflection.rating || 0) }, () => '<span class="star" style="opacity: 0.3;">★</span>').join('')}
+            </div>
+            ${session.reflection.accomplishments ? `
+              <div class="session-reflection-text" style="margin-top: 8px;">
+                <strong>Accomplishments:</strong> ${session.reflection.accomplishments}
+              </div>
+            ` : ''}
+            ${session.reflection.blockers ? `
+              <div class="session-reflection-text" style="margin-top: 8px;">
+                <strong>Blockers:</strong> ${session.reflection.blockers}
+              </div>
+            ` : ''}
+          </div>
+        `
+        : '';
+
+      const notesHtml = session.notes && session.notes.trim()
+        ? `
+          <div class="session-reflection">
+            <div class="session-reflection-title">Notes</div>
+            <div class="session-reflection-text">${session.notes}</div>
+          </div>
+        `
+        : '';
+
+      return `
+        <div class="session-item">
+          <div class="session-header">
+            <div class="session-type">${session.type}</div>
+            <div class="session-duration">${session.duration} min</div>
+          </div>
+          <div class="session-time">${dateStr} at ${timeStr}</div>
+          ${tasksHtml}
+          ${reflectionHtml}
+          ${notesHtml}
+        </div>
+      `;
+    }).join('');
+  }
+
   function format(ms) {
     const m = Math.floor(ms/60);
     const s = ms % 60;
@@ -620,9 +1092,17 @@
     $('#customMins').value = mins;
     $$('.presets .chip').forEach(c => c.classList.toggle('active', c.dataset.mins == mins));
     pause();
+    // Reset session when changing duration
+    currentSession = null;
   }
   function start() {
     if (tickId) return;
+
+    // Start session tracking
+    if (!currentSession) {
+      startSession();
+    }
+
     const startAt = Date.now();
     let last = startAt;
     tickId = setInterval(() => {
@@ -635,6 +1115,7 @@
         if (remaining <= 0) {
           pause();
           chime();
+          completeSession();
           showToast('🎉 Focus session complete!', 'success');
         }
       }
@@ -826,6 +1307,7 @@
   migrateTasks();
   renderTasks();
   renderAnalytics();
+  renderSessionHistory();
   render();
 
   // Persist some state when leaving
