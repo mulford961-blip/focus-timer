@@ -97,49 +97,6 @@
   a.link{color:var(--accent);text-decoration:none;border-bottom:1px dashed rgba(0,194,111,.5)}
   footer{color:var(--muted);text-align:center;font-size:12px}
 
-  /* Quote Section */
-  .quoteJokeRow {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 18px;
-  }
-  @media (max-width: 880px) {
-    .quoteJokeRow {
-      grid-template-columns: 1fr;
-    }
-  }
-  .quoteCard, .jokeCard {
-    text-align: center;
-    padding: 24px;
-  }
-  .quoteText {
-    font-size: 18px;
-    font-weight: 600;
-    font-style: italic;
-    line-height: 1.6;
-    color: var(--ink);
-    margin-bottom: 12px;
-  }
-  .quoteAuthor {
-    color: var(--muted);
-    font-size: 14px;
-    margin-bottom: 16px;
-  }
-  .newQuoteBtn, .newJokeBtn {
-    font-size: 13px;
-    padding: 8px 16px;
-  }
-  .jokeText {
-    font-size: 16px;
-    line-height: 1.6;
-    color: var(--ink);
-    margin-bottom: 16px;
-    min-height: 80px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
   /* Tabs */
   .tabs {
     display: flex;
@@ -174,107 +131,6 @@
   .tabContent.active {
     display: grid;
     gap: 22px;
-  }
-
-  /* Games */
-  .gamesGrid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 18px;
-  }
-  @media (max-width: 880px) {
-    .gamesGrid {
-      grid-template-columns: 1fr;
-    }
-  }
-  .gameCard {
-    padding: 24px;
-    min-height: 300px;
-    display: flex;
-    flex-direction: column;
-  }
-  .gameTitle {
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 8px;
-  }
-  .gameDesc {
-    color: var(--muted);
-    font-size: 13px;
-    margin-bottom: 16px;
-  }
-  .gameArea {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-  }
-
-  /* Memory Game */
-  .memoryGrid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    max-width: 280px;
-  }
-  .memoryCard {
-    aspect-ratio: 1;
-    background: var(--card);
-    border: 2px solid var(--line);
-    border-radius: 8px;
-    cursor: pointer;
-    display: grid;
-    place-items: center;
-    font-size: 24px;
-    transition: all 0.3s ease;
-  }
-  .memoryCard:hover:not(.flipped):not(.matched) {
-    background: var(--bg2);
-    transform: scale(1.05);
-    border-color: var(--accent);
-  }
-  .memoryCard.flipped, .memoryCard.matched {
-    background: var(--accent-2);
-    border-color: var(--accent);
-  }
-  .memoryCard.matched {
-    opacity: 0.6;
-  }
-
-  /* Reaction Game */
-  .reactionBox {
-    width: 100%;
-    max-width: 300px;
-    height: 200px;
-    background: var(--card);
-    border: 2px solid var(--line);
-    border-radius: 12px;
-    display: grid;
-    place-items: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 18px;
-    font-weight: 600;
-    text-align: center;
-    padding: 20px;
-  }
-  .reactionBox.waiting {
-    background: var(--danger);
-    border-color: var(--danger);
-  }
-  .reactionBox.ready {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #000;
-  }
-  .reactionBox:hover {
-    transform: scale(1.02);
-  }
-  .reactionScore {
-    font-size: 14px;
-    color: var(--muted);
   }
 
   /* AI Tools Shortcuts */
@@ -349,27 +205,8 @@
       padding: 8px 12px;
       font-size: 14px;
     }
-    .memoryGrid {
-      gap: 8px;
-      max-width: 240px;
-    }
-    .memoryCard {
-      font-size: 20px;
-    }
-    .reactionBox {
-      height: 160px;
-      font-size: 16px;
-      padding: 16px;
-    }
-    .gameTitle {
-      font-size: 18px;
-    }
-    .gameCard {
-      padding: 16px;
-      min-height: 250px;
-    }
     #customMins {
-    
+
     }
   }
 
@@ -521,24 +358,11 @@
     <!-- Tab Navigation -->
     <div class="tabs">
       <button class="tab active" data-tab="focus">Focus & Productivity</button>
-      <button class="tab" data-tab="games">Mini Games</button>
       <button class="tab" data-tab="ai">AI Tools</button>
     </div>
 
     <!-- Focus Tab Content -->
     <div id="focusTab" class="tabContent active">
-      <div class="quoteJokeRow">
-      <section class="card quoteCard">
-        <div class="quoteText" id="quoteText">"The secret of getting ahead is getting started."</div>
-        <div class="quoteAuthor" id="quoteAuthor">— Mark Twain</div>
-        <button class="ghost newQuoteBtn" id="newQuoteBtn">New Quote</button>
-      </section>
-
-      <section class="card jokeCard">
-        <div class="jokeText" id="jokeText">Why don't programmers like nature? It has too many bugs!</div>
-        <button class="ghost newJokeBtn" id="newJokeBtn">New Joke</button>
-      </section>
-    </div>
 
     <section class="card timer">
       <div class="ringWrap">
@@ -604,39 +428,6 @@
         <div class="muted small warn">No accounts, no tracking, just your browser.</div>
       </div>
     </section>
-    </div>
-
-    <!-- Games Tab Content -->
-    <div id="gamesTab" class="tabContent">
-      <div class="gamesGrid">
-        <!-- Memory Card Game -->
-        <section class="card gameCard">
-          <div class="gameTitle">Memory Match</div>
-          <div class="gameDesc">Find all matching pairs of emojis</div>
-          <div class="gameArea">
-            <div class="memoryGrid" id="memoryGrid"></div>
-            <div>
-              <div class="reactionScore">Moves: <span id="memoryMoves">0</span> | Matches: <span id="memoryMatches">0</span>/8</div>
-              <button class="ghost small" id="resetMemory" style="margin-top: 12px;">Reset Game</button>
-            </div>
-          </div>
-        </section>
-
-        <!-- Reaction Time Game -->
-        <section class="card gameCard">
-          <div class="gameTitle">Reaction Timer</div>
-          <div class="gameDesc">Test your reaction speed!</div>
-          <div class="gameArea">
-            <div class="reactionBox" id="reactionBox">
-              Click to Start
-            </div>
-            <div class="reactionScore">
-              <div id="reactionResult">Best Time: <span id="bestTime">-</span>ms</div>
-              <div style="margin-top: 4px; font-size: 12px;">Average: <span id="avgTime">-</span>ms</div>
-            </div>
-          </div>
-        </section>
-      </div>
     </div>
 
     <!-- AI Tools Tab Content -->
@@ -889,77 +680,6 @@
     store.set('settings', { mins: totalSecs/60, sound: $('#soundToggle').checked });
   });
 
-  // ---------- Random Quote Generator ----------
-  const quotes = [
-    { text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
-    { text: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
-    { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
-    { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
-    { text: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill" },
-    { text: "Don't watch the clock; do what it does. Keep going.", author: "Sam Levenson" },
-    { text: "The future depends on what you do today.", author: "Mahatma Gandhi" },
-    { text: "Focus on being productive instead of busy.", author: "Tim Ferriss" },
-    { text: "You don't have to be great to start, but you have to start to be great.", author: "Zig Ziglar" },
-    { text: "The way to get started is to quit talking and begin doing.", author: "Walt Disney" },
-    { text: "Productivity is never an accident. It is always the result of a commitment to excellence.", author: "Paul J. Meyer" },
-    { text: "Concentrate all your thoughts upon the work in hand. The sun's rays do not burn until brought to a focus.", author: "Alexander Graham Bell" },
-    { text: "You may delay, but time will not.", author: "Benjamin Franklin" },
-    { text: "Action is the foundational key to all success.", author: "Pablo Picasso" },
-    { text: "The only limit to our realization of tomorrow will be our doubts of today.", author: "Franklin D. Roosevelt" },
-    { text: "Start where you are. Use what you have. Do what you can.", author: "Arthur Ashe" },
-    { text: "Either you run the day or the day runs you.", author: "Jim Rohn" },
-    { text: "Time is what we want most, but what we use worst.", author: "William Penn" },
-    { text: "The key is not to prioritize what's on your schedule, but to schedule your priorities.", author: "Stephen Covey" },
-    { text: "Amateurs sit and wait for inspiration, the rest of us just get up and go to work.", author: "Stephen King" }
-  ];
-
-  const quoteText = $('#quoteText');
-  const quoteAuthor = $('#quoteAuthor');
-  const newQuoteBtn = $('#newQuoteBtn');
-
-  function displayRandomQuote() {
-    const randomIndex = Math.floor(Math.random() * quotes.length);
-    const quote = quotes[randomIndex];
-    quoteText.textContent = `"${quote.text}"`;
-    quoteAuthor.textContent = `— ${quote.author}`;
-  }
-
-  newQuoteBtn.addEventListener('click', displayRandomQuote);
-
-  // ---------- Random Joke Generator ----------
-  const jokes = [
-    "Why don't programmers like nature? It has too many bugs!",
-    "Why did the developer go broke? Because he used up all his cache!",
-    "How many programmers does it take to change a light bulb? None, that's a hardware problem.",
-    "Why do Java developers wear glasses? Because they don't C#!",
-    "What's a programmer's favorite hangout place? The Foo Bar!",
-    "Why did the scarecrow win an award? He was outstanding in his field!",
-    "What do you call a bear with no teeth? A gummy bear!",
-    "Why don't scientists trust atoms? Because they make up everything!",
-    "What did the ocean say to the beach? Nothing, it just waved!",
-    "Why did the bicycle fall over? It was two-tired!",
-    "What do you call fake spaghetti? An impasta!",
-    "How does a penguin build its house? Igloos it together!",
-    "Why don't eggs tell jokes? They'd crack each other up!",
-    "What do you call a fish wearing a bowtie? Sofishticated!",
-    "Why did the math book look so sad? Because it had too many problems!",
-    "What do you call a can opener that doesn't work? A can't opener!",
-    "Why did the coffee file a police report? It got mugged!",
-    "What's the best time to go to the dentist? Tooth hurty!",
-    "Why don't skeletons fight each other? They don't have the guts!",
-    "What did one wall say to the other wall? I'll meet you at the corner!"
-  ];
-
-  const jokeText = $('#jokeText');
-  const newJokeBtn = $('#newJokeBtn');
-
-  function displayRandomJoke() {
-    const randomIndex = Math.floor(Math.random() * jokes.length);
-    jokeText.textContent = jokes[randomIndex];
-  }
-
-  newJokeBtn.addEventListener('click', displayRandomJoke);
-
   // ---------- Tab Switching ----------
   const tabs = $$('.tab');
   const tabContents = $$('.tabContent');
@@ -978,147 +698,6 @@
       if (targetContent) targetContent.classList.add('active');
     });
   });
-
-  // ---------- Memory Card Game ----------
-  const emojis = ['🎮', '🎯', '🎨', '🎭', '🎪', '🎸', '🎺', '🎻'];
-  let memoryCards = [];
-  let flippedCards = [];
-  let matchedPairs = 0;
-  let moves = 0;
-
-  function initMemoryGame() {
-    const memoryGrid = $('#memoryGrid');
-    memoryGrid.innerHTML = '';
-
-    // Create pairs and shuffle
-    memoryCards = [...emojis, ...emojis]
-      .sort(() => Math.random() - 0.5)
-      .map((emoji, index) => ({ emoji, index, matched: false }));
-
-    // Create card elements
-    memoryCards.forEach((card, i) => {
-      const cardEl = document.createElement('div');
-      cardEl.className = 'memoryCard';
-      cardEl.dataset.index = i;
-      cardEl.addEventListener('click', () => flipCard(i, cardEl));
-      memoryGrid.appendChild(cardEl);
-    });
-
-    flippedCards = [];
-    matchedPairs = 0;
-    moves = 0;
-    updateMemoryScore();
-  }
-
-  function flipCard(index, cardEl) {
-    if (flippedCards.length >= 2 || cardEl.classList.contains('flipped') || cardEl.classList.contains('matched')) {
-      return;
-    }
-
-    cardEl.classList.add('flipped');
-    cardEl.textContent = memoryCards[index].emoji;
-    flippedCards.push({ index, cardEl });
-
-    if (flippedCards.length === 2) {
-      moves++;
-      updateMemoryScore();
-
-      setTimeout(() => {
-        const [first, second] = flippedCards;
-
-        if (memoryCards[first.index].emoji === memoryCards[second.index].emoji) {
-          // Match found
-          first.cardEl.classList.add('matched');
-          second.cardEl.classList.add('matched');
-          memoryCards[first.index].matched = true;
-          memoryCards[second.index].matched = true;
-          matchedPairs++;
-          updateMemoryScore();
-
-          if (matchedPairs === emojis.length) {
-            setTimeout(() => alert(`You won in ${moves} moves!`), 300);
-          }
-        } else {
-          // No match
-          first.cardEl.classList.remove('flipped');
-          second.cardEl.classList.remove('flipped');
-          first.cardEl.textContent = '';
-          second.cardEl.textContent = '';
-        }
-
-        flippedCards = [];
-      }, 800);
-    }
-  }
-
-  function updateMemoryScore() {
-    $('#memoryMoves').textContent = moves;
-    $('#memoryMatches').textContent = matchedPairs;
-  }
-
-  $('#resetMemory')?.addEventListener('click', initMemoryGame);
-  initMemoryGame();
-
-  // ---------- Reaction Time Game ----------
-  let reactionState = 'idle';
-  let reactionStartTime = 0;
-  let reactionTimeout = null;
-  let reactionTimes = [];
-  let bestReactionTime = Infinity;
-
-  const reactionBox = $('#reactionBox');
-
-  function startReaction() {
-    if (reactionState !== 'idle') return;
-
-    reactionState = 'waiting';
-    reactionBox.textContent = 'Wait for green...';
-    reactionBox.classList.add('waiting');
-    reactionBox.classList.remove('ready');
-
-    // Random delay between 2-5 seconds
-    const delay = 2000 + Math.random() * 3000;
-
-    reactionTimeout = setTimeout(() => {
-      reactionState = 'ready';
-      reactionBox.textContent = 'CLICK NOW!';
-      reactionBox.classList.remove('waiting');
-      reactionBox.classList.add('ready');
-      reactionStartTime = Date.now();
-    }, delay);
-  }
-
-  function handleReactionClick() {
-    if (reactionState === 'idle') {
-      startReaction();
-    } else if (reactionState === 'waiting') {
-      // Clicked too early
-      clearTimeout(reactionTimeout);
-      reactionState = 'idle';
-      reactionBox.classList.remove('waiting');
-      reactionBox.textContent = 'Too early! Click to try again';
-    } else if (reactionState === 'ready') {
-      // Calculate reaction time
-      const reactionTime = Date.now() - reactionStartTime;
-      reactionTimes.push(reactionTime);
-
-      if (reactionTime < bestReactionTime) {
-        bestReactionTime = reactionTime;
-      }
-
-      // Calculate average
-      const avg = Math.round(reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length);
-
-      reactionState = 'idle';
-      reactionBox.classList.remove('ready');
-      reactionBox.textContent = `${reactionTime}ms! Click to try again`;
-
-      $('#bestTime').textContent = bestReactionTime;
-      $('#avgTime').textContent = avg;
-    }
-  }
-
-  reactionBox?.addEventListener('click', handleReactionClick);
 })();
 </script>
 </body>
