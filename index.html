@@ -1,851 +1,181 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Focus Timer + Quick Tasks</title>
-<style>
-:root {
-    --bg1:#020304;
-    --bg2:#0a0c0d;
-    --card:#111315;
-    --ink:#e7ecef;
-    --muted:#6b7280;
-    --line:#1e2327;
-    --accent:#00c26f;     /* robinhood green */
-    --accent-2:#10b981;
-    --danger:#f87171;
-    --radius:16px;
-    --shadow:0 8px 25px rgba(0,0,0,.45);
-  }
-
-  /* Light Theme */
-  [data-theme="light"] {
-    --bg1:#f8fafc;
-    --bg2:#e2e8f0;
-    --card:#ffffff;
-    --ink:#1e293b;
-    --muted:#64748b;
-    --line:#e2e8f0;
-    --accent:#00c26f;
-    --accent-2:#10b981;
-    --danger:#ef4444;
-    --shadow:0 8px 25px rgba(0,0,0,.08);
-  }
-
-  *{box-sizing:border-box}
-  html,body{height:100%; transition:background-color .3s ease, color .3s ease}
-  body{
-    margin:0; background:linear-gradient(180deg,var(--bg1),var(--bg2));
-    color:var(--ink);
-    font-family:"Inter",ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
-    display:grid; place-items:start; padding:28px;
-  }
-  .app{width:100%; max-width:960px; margin:0 auto; display:grid; gap:22px}
-  header{display:flex; align-items:center; justify-content:space-between; gap:12px}
-  .title{font-weight:800; font-size:clamp(22px,3.5vw,30px); letter-spacing:.3px}
-  .sub{color:var(--muted); font-size:14px}
-  .card{
-    background:var(--card); border:1px solid var(--line);
-    border-radius:var(--radius); box-shadow:var(--shadow); padding:18px;
-    transition:box-shadow .3s ease, border-color .3s ease;
-  }
-  .card:hover {
-    box-shadow:0 12px 35px rgba(0,0,0,.15);
-  }
-  .timer{display:grid; grid-template-columns:1fr 1fr; gap:18px}
-  @media (max-width:880px){ .timer{grid-template-columns:1fr} }
-  .ringWrap{display:grid; place-items:center; position:relative; padding:8px}
-  .time{position:absolute; font-weight:800; font-size:clamp(36px,9vw,64px)}
-  .controls,.presets{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
-  button,.chip{
-    appearance:none; background:var(--card); color:var(--ink);
-    border:1px solid var(--line); border-radius:12px;
-    padding:10px 14px; cursor:pointer; font-weight:600;
-    transition:background .15s ease,border-color .15s ease,transform .06s ease;
-  }
-  button:hover,.chip:hover{background:var(--bg2); border-color:var(--muted)}
-  button:active,.chip:active{transform:translateY(1px)}
-  button.primary{background:var(--accent); border-color:var(--accent); color:#000; font-weight:700}
-  button.primary:hover{filter:brightness(1.1)}
-  button.danger{background:var(--danger); border-color:var(--danger); color:#000}
-  button.ghost{background:transparent}
-  .presets .chip.active{background:var(--accent-2); border-color:var(--accent-2); color:#000}
-  input[type="text"],input[type="number"],textarea{
-    width:100%; padding:12px 14px; border-radius:12px;
-    background:var(--bg2); color:var(--ink); border:1px solid var(--line); outline:none;
-    transition:border-color .2s ease, box-shadow .2s ease;
-  }
-  input[type="text"]:focus,input[type="number"]:focus,textarea:focus{
-    border-color:var(--accent); box-shadow:0 0 0 3px rgba(0,194,111,.2);
-  }
-  .grid{display:grid; grid-template-columns:1.4fr 1fr; gap:18px}
-  @media (max-width:1000px){ .grid{grid-template-columns:1fr} }
-  .taskRow{display:grid; grid-template-columns:1fr auto; gap:8px; margin-top:8px}
-  .taskItem{
-    display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px;
-    padding:10px 12px; border-radius:12px; background:var(--bg2); border:1px solid var(--line);
-    transition:background .2s ease, border-color .2s ease;
-  }
-  .taskItem.done{opacity:.6; text-decoration:line-through}
-  .checkbox{width:18px;height:18px;accent-color:var(--accent)}
-  .muted{color:var(--muted);font-size:13px}
-  .small{font-size:12px}
-  .tog{display:inline-flex;align-items:center;gap:8px}
-  a.link{color:var(--accent);text-decoration:none;border-bottom:1px dashed rgba(0,194,111,.5)}
-  footer{color:var(--muted);text-align:center;font-size:12px}
-
-  /* Analytics Styles */
-  .analytics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 12px;
-    margin-top: 12px;
-  }
-  .stat-card {
-    background: var(--bg2);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 12px;
-    text-align: center;
-    transition: transform 0.2s ease, border-color 0.2s ease;
-  }
-  .stat-card:hover {
-    transform: translateY(-2px);
-    border-color: var(--accent);
-  }
-  .stat-value {
-    font-size: 28px;
-    font-weight: 800;
-    color: var(--accent);
-    margin-bottom: 4px;
-  }
-  .stat-label {
-    font-size: 12px;
-    color: var(--muted);
-    font-weight: 500;
-  }
-  .foot {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 12px;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  /* Tabs */
-  .tabs {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 22px;
-    border-bottom: 2px solid var(--line);
-    padding-bottom: 0;
-  }
-  .tab {
-    padding: 12px 24px;
-    background: transparent;
-    border: none;
-    border-bottom: 3px solid transparent;
-    color: var(--muted);
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 15px;
-    transition: all 0.2s ease;
-    margin-bottom: -2px;
-  }
-  .tab:hover {
-    color: var(--ink);
-    background: rgba(255, 255, 255, 0.03);
-  }
-  .tab.active {
-    color: var(--accent);
-    border-bottom-color: var(--accent);
-  }
-  .tabContent {
-    display: none;
-  }
-  .tabContent.active {
-    display: grid;
-    gap: 22px;
-  }
-
-  /* AI Tools Shortcuts */
-  .aiShortcut {
-    text-decoration: none;
-    color: inherit;
-  }
-  .aiShortcut .card {
-    padding: 28px;
-    cursor: pointer;
-    transition: transform 0.2s ease, border-color 0.2s ease;
-  }
-  .aiShortcut .card:hover {
-    transform: translateY(-4px);
-    border-color: var(--accent);
-  }
-  .aiToolsGrid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 18px;
-    max-width: 600px;
-    margin: 0 auto;
-  }
-  @media (max-width: 600px) {
-    .aiToolsGrid {
-      grid-template-columns: 1fr;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Focus Timer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg1: #0b1120;
+      --bg2: #0f172a;
+      --card: #111827;
+      --ink: #e5e7eb;
+      --muted: #9ca3af;
+      --line: #1f2937;
+      --accent: #22c55e;
+      --radius: 16px;
+      --shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
     }
-  }
 
-  /* Enhanced Mobile Responsiveness */
-  @media (max-width: 600px) {
+    * { box-sizing: border-box; }
+
     body {
-      padding: 16px;
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at 10% 20%, rgba(34, 197, 94, 0.12), transparent 25%),
+                  radial-gradient(circle at 80% 0%, rgba(79, 70, 229, 0.14), transparent 30%),
+                  linear-gradient(180deg, var(--bg1), var(--bg2));
+      color: var(--ink);
+      display: grid;
+      place-items: center;
+      padding: 24px;
     }
+
     .app {
-      gap: 16px;
+      width: 100%;
+      max-width: 720px;
+      display: grid;
+      gap: 18px;
     }
+
     header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 16px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
     }
-    header > div:last-child {
-      width: 100%;
-    }
-    #xpDisplay {
-      min-width: 100% !important;
-      width: 100%;
-    }
+
     .title {
-      font-size: 22px;
+      font-weight: 800;
+      font-size: clamp(24px, 3vw, 32px);
+      letter-spacing: 0.3px;
     }
+
     .sub {
-      font-size: 13px;
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 4px;
     }
+
     .card {
-      padding: 16px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
     }
-    .tabs {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
+
+    .timer {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 22px;
+      align-items: center;
     }
-    .tab {
-      padding: 10px 16px;
-      font-size: 14px;
-      white-space: nowrap;
+
+    @media (max-width: 720px) {
+      .timer { grid-template-columns: 1fr; }
     }
-    .ringWrap svg {
-      width: 220px;
-      height: 220px;
+
+    .ringWrap {
+      position: relative;
+      display: grid;
+      place-items: center;
     }
+
     .time {
-      font-size: 42px;
+      position: absolute;
+      font-weight: 800;
+      font-size: clamp(40px, 10vw, 64px);
     }
-    .controls, .presets {
-      gap: 8px;
-    }
-    button, .chip {
-      padding: 8px 12px;
-      font-size: 14px;
-    }
-    #customMins {
 
-    }
-  }
-
-  @media (max-width: 400px) {
+    .controls,
     .presets {
-      flex-direction: column;
-      align-items: stretch;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
     }
-    .chip, button {
-      width: 100%;
+
+    button,
+    .chip,
+    input[type="number"] {
+      font-family: inherit;
+      font-weight: 700;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      padding: 10px 14px;
+      background: var(--card);
+      color: var(--ink);
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.08s ease;
+    }
+
+    button:hover,
+    .chip:hover {
+      background: #0b1529;
+      border-color: var(--muted);
+    }
+
+    button:active,
+    .chip:active { transform: translateY(1px); }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0f172a;
+    }
+
+    button.primary:hover { filter: brightness(1.05); }
+
+    button.ghost { background: transparent; }
+
+    .chip.active {
+      background: #15803d;
+      border-color: #15803d;
+      color: #ecfdf3;
+    }
+
+    input[type="number"] {
+      width: 90px;
+      background: #0b1529;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    footer {
+      color: var(--muted);
       text-align: center;
+      font-size: 12px;
+      padding: 8px 0 0;
     }
-    .controls {
-      flex-direction: column;
-      align-items: stretch;
-    }
-  }
-
-  /* Enhanced Visual Feedback & Animations */
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-  }
-
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
-  }
-
-  @keyframes slideIn {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  @keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
-  }
-
-  @keyframes success {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); background: var(--accent); }
-    100% { transform: scale(1); }
-  }
-
-  /* Apply animations to elements */
-  .taskItem {
-    animation: slideIn 0.3s ease;
-  }
-
-  button.primary:active {
-    animation: pulse 0.3s ease;
-  }
-
-  .taskItem:hover {
-    border-color: var(--accent);
-    transform: translateX(4px);
-  }
-
-  .chip:active, button:active {
-    transform: translateY(2px) scale(0.98);
-  }
-
-  /* Tab switching animation */
-  .tabContent.active {
-    animation: fadeIn 0.4s ease;
-  }
-
-  /* Theme toggle pulse */
-  #themeToggle:active {
-    animation: pulse 0.2s ease;
-  }
-
-  /* Add ripple effect class for JavaScript */
-  .ripple {
-    position: relative;
-    overflow: hidden;
-  }
-
-  .ripple::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.5);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
-  }
-
-  .ripple:active::after {
-    width: 200px;
-    height: 200px;
-  }
-
-  /* Success state for task completion */
-  .taskItem.done {
-    animation: success 0.5s ease;
-  }
-
-  /* Focus states */
-  button:focus-visible, .chip:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
-
-  input:focus-visible, textarea:focus-visible {
-    outline: none;
-  }
-
-  /* Smooth scrolling */
-  html {
-    scroll-behavior: smooth;
-  }
-
-  /* Modal/Dialog Styles */
-  .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    animation: fadeIn 0.3s ease;
-    padding: 20px;
-  }
-
-  .modal {
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    max-width: 600px;
-    width: 100%;
-    max-height: 90vh;
-    overflow-y: auto;
-    animation: slideIn 0.3s ease;
-    padding: 28px;
-  }
-
-  .modal h2 {
-    margin-top: 0;
-    margin-bottom: 20px;
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--accent);
-  }
-
-  .modal-section {
-    margin-bottom: 20px;
-  }
-
-  .modal-section label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 600;
-    font-size: 14px;
-    color: var(--ink);
-  }
-
-  .modal-section .muted {
-    display: block;
-    margin-top: 4px;
-    font-size: 12px;
-  }
-
-  .rating-container {
-    display: flex;
-    gap: 12px;
-    margin-top: 8px;
-  }
-
-  .rating-btn {
-    flex: 1;
-    padding: 12px;
-    border: 2px solid var(--line);
-    background: var(--bg2);
-    color: var(--ink);
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.2s ease;
-  }
-
-  .rating-btn:hover {
-    border-color: var(--accent);
-    background: var(--card);
-  }
-
-  .rating-btn.selected {
-    border-color: var(--accent);
-    background: var(--accent);
-    color: #000;
-  }
-
-  .modal-actions {
-    display: flex;
-    gap: 12px;
-    margin-top: 28px;
-  }
-
-  .modal-actions button {
-    flex: 1;
-  }
-
-  /* Loot Box & Rarity Styles */
-  .rarity-common { border-color: #9ca3af !important; color: #9ca3af; }
-  .rarity-rare { border-color: #3b82f6 !important; color: #3b82f6; }
-  .rarity-epic { border-color: #a855f7 !important; color: #a855f7; }
-  .rarity-legendary { border-color: #f59e0b !important; color: #f59e0b; }
-
-  .rarity-common { background: linear-gradient(135deg, rgba(156, 163, 175, 0.1), rgba(156, 163, 175, 0.05)); }
-  .rarity-rare { background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05)); }
-  .rarity-epic { background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(168, 85, 247, 0.05)); }
-  .rarity-legendary { background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.05)); }
-
-  .food-item {
-    padding: 12px;
-    border: 2px solid var(--line);
-    border-radius: 12px;
-    text-align: center;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    position: relative;
-  }
-
-  .food-item:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-  }
-
-  .food-item.locked {
-    opacity: 0.3;
-    cursor: default;
-  }
-
-  .food-item.locked:hover {
-    transform: none;
-  }
-
-  .food-emoji {
-    font-size: 48px;
-    margin-bottom: 8px;
-  }
-
-  .food-name {
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 4px;
-  }
-
-  .food-rarity {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .loot-box-counter {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    border-radius: 20px;
-    font-weight: 700;
-    font-size: 14px;
-    color: #000;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .loot-box-counter:hover {
-    transform: scale(1.05);
-    filter: brightness(1.1);
-  }
-
-  @keyframes lootBoxShake {
-    0%, 100% { transform: rotate(0deg); }
-    25% { transform: rotate(-10deg); }
-    75% { transform: rotate(10deg); }
-  }
-
-  @keyframes lootBoxOpen {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.2) rotate(20deg); }
-    100% { transform: scale(0) rotate(180deg); opacity: 0; }
-  }
-
-  @keyframes itemReveal {
-    0% { transform: scale(0) rotate(-180deg); opacity: 0; }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1) rotate(0deg); opacity: 1; }
-  }
-
-  .loot-box-icon {
-    font-size: 80px;
-    cursor: pointer;
-    transition: transform 0.3s ease;
-    display: inline-block;
-  }
-
-  .loot-box-icon:hover {
-    animation: lootBoxShake 0.5s ease infinite;
-  }
-
-  .loot-box-icon.opening {
-    animation: lootBoxOpen 0.8s ease forwards;
-  }
-
-  .revealed-items {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin-top: 24px;
-  }
-
-  .revealed-item {
-    opacity: 0;
-    animation: itemReveal 0.6s ease forwards;
-  }
-
-  .revealed-item:nth-child(1) { animation-delay: 0.3s; }
-  .revealed-item:nth-child(2) { animation-delay: 0.5s; }
-  .revealed-item:nth-child(3) { animation-delay: 0.7s; }
-
-  .collection-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 12px;
-    margin-top: 16px;
-  }
-
-  .new-badge {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    background: var(--danger);
-    color: #fff;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 4px 8px;
-    border-radius: 12px;
-    animation: pulse 1s ease infinite;
-  }
-
-  /* Clicker Game Styles */
-  .clicker-container {
-    display: grid;
-    gap: 22px;
-  }
-
-  .game-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 12px;
-  }
-
-  .click-button-area {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-    position: relative;
-  }
-
-  .click-button {
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    border: 4px solid var(--card);
-    box-shadow: 0 10px 40px rgba(0, 194, 111, 0.4);
-    cursor: pointer;
-    transition: all 0.1s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 80px;
-    user-select: none;
-    position: relative;
-  }
-
-  .click-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 12px 50px rgba(0, 194, 111, 0.6);
-  }
-
-  .click-button:active {
-    transform: scale(0.95);
-  }
-
-  @keyframes clickPop {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
-  }
-
-  .click-button.clicked {
-    animation: clickPop 0.2s ease;
-  }
-
-  .floating-coin {
-    position: absolute;
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--accent);
-    pointer-events: none;
-    animation: floatUp 1s ease-out forwards;
-    z-index: 100;
-  }
-
-  @keyframes floatUp {
-    0% {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-    100% {
-      opacity: 0;
-      transform: translateY(-100px) scale(1.5);
-    }
-  }
-
-  .upgrade-card {
-    background: var(--bg2);
-    border: 2px solid var(--line);
-    border-radius: 12px;
-    padding: 16px;
-    transition: all 0.2s ease;
-    cursor: pointer;
-  }
-
-  .upgrade-card:hover {
-    border-color: var(--accent);
-    transform: translateY(-2px);
-  }
-
-  .upgrade-card.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  .upgrade-card.disabled:hover {
-    transform: none;
-    border-color: var(--line);
-  }
-
-  .upgrade-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-  }
-
-  .upgrade-icon {
-    font-size: 32px;
-  }
-
-  .upgrade-level {
-    font-size: 12px;
-    color: var(--muted);
-    background: var(--card);
-    padding: 4px 8px;
-    border-radius: 8px;
-  }
-
-  .upgrade-name {
-    font-weight: 700;
-    font-size: 16px;
-    margin-bottom: 4px;
-  }
-
-  .upgrade-description {
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 8px;
-  }
-
-  .upgrade-cost {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-weight: 700;
-    font-size: 14px;
-    color: var(--accent);
-  }
-
-  .shop-item {
-    background: var(--bg2);
-    border: 2px solid var(--line);
-    border-radius: 12px;
-    padding: 20px;
-    text-align: center;
-    transition: all 0.2s ease;
-  }
-
-  .shop-item:hover {
-    border-color: var(--accent);
-    transform: translateY(-2px);
-  }
-
-  .shop-icon {
-    font-size: 64px;
-    margin-bottom: 12px;
-  }
-
-  .shop-price {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--accent);
-    margin-bottom: 12px;
-  }
-</style>
+  </style>
 </head>
 <body>
   <div class="app">
     <header>
       <div>
-        <div class="title">Focus Timer + Quick Tasks</div>
-        <div class="sub">A no-login, one-page productivity tool. Your data saves in your browser.</div>
-      </div>
-      <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
-        <!-- XP & Level Display -->
-        <div id="xpDisplay" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; min-width: 200px;">
-          <div style="flex: 1;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-              <span style="font-weight: 700; font-size: 14px; color: var(--accent);">Level <span id="userLevel">1</span></span>
-              <span style="font-size: 12px; color: var(--muted);"><span id="currentXP">0</span> / <span id="nextLevelXP">100</span> XP</span>
-            </div>
-            <div style="width: 100%; height: 6px; background: var(--bg2); border-radius: 3px; overflow: hidden;">
-              <div id="xpProgressBar" style="height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); width: 0%; transition: width 0.5s ease;"></div>
-            </div>
-          </div>
-          <button id="rewardsBtn" class="ghost" style="padding: 6px 10px; font-size: 18px; line-height: 1;">
-            🎁
-          </button>
-          <div id="lootBoxCounter" class="loot-box-counter" style="display: none;">
-            📦 <span id="lootBoxCount">0</span>
-          </div>
-        </div>
-
-        <button id="themeToggle" class="ghost" style="padding: 8px 14px;">
-          <span id="themeIcon">🌙</span>
-        </button>
-        <div class="tog">
-          <input id="soundToggle" type="checkbox" />
-          <label for="soundToggle" class="small">Chime on session end</label>
-        </div>
+        <div class="title">Focus Timer</div>
+        <div class="sub">A clean, no-login Pomodoro timer that stays in your browser.</div>
       </div>
     </header>
 
-    <!-- Tab Navigation -->
-    <div class="tabs">
-      <button class="tab active" data-tab="focus">Focus & Productivity</button>
-      <button class="tab" data-tab="game">Food Game</button>
-      <button class="tab" data-tab="ai">AI Tools</button>
-    </div>
-
-    <!-- Focus Tab Content -->
-    <div id="focusTab" class="tabContent active">
-
     <section class="card timer">
       <div class="ringWrap">
-        <svg width="260" height="260" viewBox="0 0 120 120" style="position: relative;">
-          <circle cx="60" cy="60" r="52" stroke="rgba(255,255,255,.12)" stroke-width="8" fill="none"/>
+        <svg width="260" height="260" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="52" stroke="rgba(255,255,255,0.1)" stroke-width="8" fill="none" />
           <circle id="progress" cx="60" cy="60" r="52" stroke="url(#g)" stroke-width="8" stroke-linecap="round" fill="none"
-                  transform="rotate(-90 60 60)" stroke-dasharray="327" stroke-dashoffset="327"/>
+                  transform="rotate(-90 60 60)" stroke-dasharray="327" stroke-dashoffset="327" />
           <defs>
             <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#7c5cff"></stop>
-              <stop offset="100%" stop-color="#33d6a6"></stop>
+              <stop offset="0%" stop-color="#4f46e5"></stop>
+              <stop offset="100%" stop-color="#22c55e"></stop>
             </linearGradient>
           </defs>
         </svg>
@@ -853,1771 +183,111 @@
       </div>
 
       <div>
-        <div class="presets" style="margin-bottom:12px;">
+        <div class="presets" style="margin-bottom: 12px;">
           <button class="chip active" data-mins="25">Pomodoro 25</button>
           <button class="chip" data-mins="5">Short Break 5</button>
           <button class="chip" data-mins="15">Long Break 15</button>
-          <span class="spacer"></span>
-          <label class="muted small">Custom:</label>
-          <input id="customMins" type="number" min="1" max="180" value="25" style="width:84px;" />
+          <span class="chip" style="pointer-events: none; opacity: 0.7;">Custom</span>
+          <input id="customMins" type="number" min="1" max="180" value="25" />
           <button class="chip" id="applyCustom">Set</button>
         </div>
-        <div class="controls" style="margin-bottom:12px;">
+
+        <div class="controls" style="margin-bottom: 10px;">
           <button id="startBtn" class="primary">Start</button>
           <button id="pauseBtn" class="ghost">Pause</button>
-          <button id="resetBtn" class="danger">Reset</button>
+          <button id="resetBtn" class="ghost">Reset</button>
         </div>
-        <div class="muted small">
-          Tip: switch presets anytime—progress resets to match the selected length.
-        </div>
+
+        <div class="hint">Switch presets anytime; progress resets to match the new length.</div>
       </div>
     </section>
 
-    <section class="grid">
-      <div class="card">
-        <strong>Quick Tasks</strong>
-
-        <!-- Analytics Summary -->
-        <div class="analytics-grid">
-          <div class="stat-card">
-            <div class="stat-value" id="statTotal">0</div>
-            <div class="stat-label">Total Tasks</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="statCompleted">0</div>
-            <div class="stat-label">Completed</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="statToday">0</div>
-            <div class="stat-label">Today</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="statRate">0%</div>
-            <div class="stat-label">Rate</div>
-          </div>
-        </div>
-
-        <div class="taskRow">
-          <input id="taskInput" type="text" placeholder="Add a task and press Enter…" />
-          <button id="addTask">Add</button>
-        </div>
-        <div id="taskList" style="display:grid; gap:8px; margin-top:12px;"></div>
-        <div class="foot">
-          <span class="muted small">Tasks save automatically.</span>
-          <div>
-            <button id="clearDone" class="ghost small">Clear done</button>
-            <button id="clearAll" class="ghost small">Clear all</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <strong>Session Notes</strong>
-        <textarea id="notes" rows="9" placeholder="Jot down what you're focusing on…"></textarea>
-        <div class="foot">
-          <span class="muted small">Notes auto-save locally.</span>
-          <a id="downloadNotes" href="#" class="link small">Download .txt</a>
-        </div>
-        <div class="muted small warn">No accounts, no tracking, just your browser.</div>
-      </div>
-    </section>
-    </div>
-
-    <!-- Food Game Tab Content -->
-    <div id="gameTab" class="tabContent">
-      <div class="clicker-container">
-
-        <!-- Game Stats -->
-        <section class="card">
-          <strong>🪙 Your Stats</strong>
-          <div class="game-stats" style="margin-top: 16px;">
-            <div class="stat-card">
-              <div class="stat-value" id="gameFoodCoins">0</div>
-              <div class="stat-label">Food Coins</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-value" id="gameClickPower">1</div>
-              <div class="stat-label">Per Click</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-value" id="gameTotalClicks">0</div>
-              <div class="stat-label">Total Clicks</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-value" id="gameCoinsPerSec">0</div>
-              <div class="stat-label">Per Second</div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Click Area -->
-        <section class="card">
-          <div class="click-button-area">
-            <h2 style="margin-bottom: 24px;">Click to Earn Coins!</h2>
-            <div id="clickButton" class="click-button">
-              🍔
-            </div>
-            <p class="muted" style="margin-top: 24px; text-align: center;">
-              Click the burger to earn food coins and unlock rare food items!
-            </p>
-          </div>
-        </section>
-
-        <!-- Shop -->
-        <section class="card">
-          <strong>🏪 Shop</strong>
-          <p class="muted" style="margin-top: 8px; margin-bottom: 16px;">
-            Spend your food coins on loot boxes and upgrades
-          </p>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-            <div class="shop-item" id="buyLootBox">
-              <div class="shop-icon">📦</div>
-              <div style="font-weight: 700; font-size: 18px; margin-bottom: 8px;">Loot Box</div>
-              <div class="shop-price">
-                <span>🪙</span>
-                <span>100</span>
-              </div>
-              <button class="primary" style="width: 100%;">Buy</button>
-            </div>
-            <div class="shop-item" id="buyXP">
-              <div class="shop-icon">⭐</div>
-              <div style="font-weight: 700; font-size: 18px; margin-bottom: 8px;">50 XP</div>
-              <div class="shop-price">
-                <span>🪙</span>
-                <span>50</span>
-              </div>
-              <button class="primary" style="width: 100%;">Buy</button>
-            </div>
-          </div>
-        </section>
-
-        <!-- Upgrades -->
-        <section class="card">
-          <strong>⬆️ Upgrades</strong>
-          <p class="muted" style="margin-top: 8px; margin-bottom: 16px;">
-            Improve your clicking power and earn more coins
-          </p>
-          <div id="upgradesContainer" style="display: grid; gap: 12px;"></div>
-        </section>
-
-      </div>
-    </div>
-
-    <!-- AI Tools Tab Content -->
-    <div id="aiTab" class="tabContent">
-      <section class="card" style="text-align: center; padding: 32px;">
-        <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 12px;">AI Shortcuts</h2>
-        <p style="color: var(--muted); margin-bottom: 32px;">Quick access to AI assistants</p>
-
-        <div class="aiToolsGrid">
-          <!-- Claude Shortcut -->
-          <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" class="aiShortcut">
-            <div class="card">
-              <div style="font-size: 48px; margin-bottom: 12px;">🤖</div>
-              <div style="font-size: 20px; font-weight: 700; margin-bottom: 8px;">Claude</div>
-              <div style="color: var(--muted); font-size: 14px;">Anthropic's AI assistant</div>
-            </div>
-          </a>
-
-          <!-- ChatGPT Shortcut -->
-          <a href="https://chat.openai.com" target="_blank" rel="noopener noreferrer" class="aiShortcut">
-            <div class="card">
-              <div style="font-size: 48px; margin-bottom: 12px;">💬</div>
-              <div style="font-size: 20px; font-weight: 700; margin-bottom: 8px;">ChatGPT</div>
-              <div style="color: var(--muted); font-size: 14px;">OpenAI's conversational AI</div>
-            </div>
-          </a>
-        </div>
-
-        <p style="color: var(--muted); font-size: 13px; margin-top: 32px;">
-          Links open in new tabs so you can keep your timer running
-        </p>
-      </section>
-    </div>
-
+    <footer>Built to stay simple. Everything runs locally in your browser.</footer>
   </div>
 
-  <!-- Reflection Modal (initially hidden) -->
-  <div id="reflectionModal" style="display: none;"></div>
+  <script>
+    const timeEl = document.getElementById('time');
+    const progressEl = document.getElementById('progress');
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const presetButtons = Array.from(document.querySelectorAll('.chip[data-mins]'));
+    const customInput = document.getElementById('customMins');
+    const applyCustomBtn = document.getElementById('applyCustom');
 
-<script>
-(() => {
-  // ---------- Utilities ----------
-  const $ = (sel, ctx=document) => ctx.querySelector(sel);
-  const $$ = (sel, ctx=document) => Array.from(ctx.querySelectorAll(sel));
-  const store = {
-    get(key, fallback) {
-      try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
-      catch { return fallback; }
-    },
-    set(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
-  };
+    const CIRCUMFERENCE = 327;
+    let timerId = null;
+    let duration = 25 * 60;
+    let remaining = duration;
 
-  // ---------- XP & Leveling System ----------
-  const XP_REWARDS = {
-    SESSION_BASE: 50,           // Base XP for completing a session
-    SESSION_PER_MIN: 2,         // Additional XP per minute
-    TASK_COMPLETE: 20,          // XP for completing a task
-    REFLECTION: 25              // Bonus XP for adding reflection
-  };
-
-  const LEVEL_THRESHOLDS = [
-    0,      // Level 1
-    100,    // Level 2
-    250,    // Level 3
-    500,    // Level 4
-    1000,   // Level 5
-    2000,   // Level 6
-    3500,   // Level 7
-    5500,   // Level 8
-    8000,   // Level 9
-    11000,  // Level 10
-    15000,  // Level 11
-    20000,  // Level 12
-    26000,  // Level 13
-    33000,  // Level 14
-    41000,  // Level 15
-    50000   // Level 16
-  ];
-
-  const REWARDS = {
-    themes: [
-      { level: 1, id: 'default', name: 'Default', unlocked: true },
-      { level: 3, id: 'ocean', name: 'Ocean Blue', unlocked: false },
-      { level: 5, id: 'forest', name: 'Forest Green', unlocked: false },
-      { level: 7, id: 'sunset', name: 'Sunset Orange', unlocked: false },
-      { level: 10, id: 'galaxy', name: 'Galaxy Purple', unlocked: false }
-    ],
-    sounds: [
-      { level: 1, id: 'default', name: 'Default Chime', unlocked: true },
-      { level: 4, id: 'bell', name: 'Temple Bell', unlocked: false },
-      { level: 6, id: 'gong', name: 'Meditation Gong', unlocked: false },
-      { level: 8, id: 'harp', name: 'Harp Arpeggio', unlocked: false }
-    ],
-    icons: [
-      { level: 1, id: 'default', name: 'Default', emoji: '⏱️', unlocked: true },
-      { level: 2, id: 'fire', name: 'Fire', emoji: '🔥', unlocked: false },
-      { level: 5, id: 'rocket', name: 'Rocket', emoji: '🚀', unlocked: false },
-      { level: 8, id: 'star', name: 'Star', emoji: '⭐', unlocked: false },
-      { level: 12, id: 'trophy', name: 'Trophy', emoji: '🏆', unlocked: false }
-    ]
-  };
-
-  // ---------- Loot Box & Food Items System ----------
-  const FOOD_ITEMS = {
-    common: [
-      { id: 'apple', name: 'Apple', emoji: '🍎', rarity: 'common' },
-      { id: 'banana', name: 'Banana', emoji: '🍌', rarity: 'common' },
-      { id: 'orange', name: 'Orange', emoji: '🍊', rarity: 'common' },
-      { id: 'grapes', name: 'Grapes', emoji: '🍇', rarity: 'common' },
-      { id: 'watermelon', name: 'Watermelon', emoji: '🍉', rarity: 'common' },
-      { id: 'strawberry', name: 'Strawberry', emoji: '🍓', rarity: 'common' },
-      { id: 'bread', name: 'Bread', emoji: '🍞', rarity: 'common' },
-      { id: 'cheese', name: 'Cheese', emoji: '🧀', rarity: 'common' },
-      { id: 'egg', name: 'Egg', emoji: '🥚', rarity: 'common' },
-      { id: 'carrot', name: 'Carrot', emoji: '🥕', rarity: 'common' },
-      { id: 'corn', name: 'Corn', emoji: '🌽', rarity: 'common' },
-      { id: 'broccoli', name: 'Broccoli', emoji: '🥦', rarity: 'common' }
-    ],
-    rare: [
-      { id: 'pizza', name: 'Pizza', emoji: '🍕', rarity: 'rare' },
-      { id: 'burger', name: 'Burger', emoji: '🍔', rarity: 'rare' },
-      { id: 'sushi', name: 'Sushi', emoji: '🍣', rarity: 'rare' },
-      { id: 'taco', name: 'Taco', emoji: '🌮', rarity: 'rare' },
-      { id: 'ramen', name: 'Ramen', emoji: '🍜', rarity: 'rare' },
-      { id: 'icecream', name: 'Ice Cream', emoji: '🍦', rarity: 'rare' },
-      { id: 'donut', name: 'Donut', emoji: '🍩', rarity: 'rare' },
-      { id: 'cake', name: 'Cake', emoji: '🍰', rarity: 'rare' },
-      { id: 'cookie', name: 'Cookie', emoji: '🍪', rarity: 'rare' },
-      { id: 'croissant', name: 'Croissant', emoji: '🥐', rarity: 'rare' }
-    ],
-    epic: [
-      { id: 'lobster', name: 'Lobster', emoji: '🦞', rarity: 'epic' },
-      { id: 'steak', name: 'Steak', emoji: '🥩', rarity: 'epic' },
-      { id: 'sashimi', name: 'Sashimi', emoji: '🍱', rarity: 'epic' },
-      { id: 'paella', name: 'Paella', emoji: '🥘', rarity: 'epic' },
-      { id: 'champagne', name: 'Champagne', emoji: '🍾', rarity: 'epic' },
-      { id: 'birthday-cake', name: 'Birthday Cake', emoji: '🎂', rarity: 'epic' },
-      { id: 'cupcake', name: 'Cupcake', emoji: '🧁', rarity: 'epic' }
-    ],
-    legendary: [
-      { id: 'golden-apple', name: 'Golden Apple', emoji: '🍎✨', rarity: 'legendary' },
-      { id: 'truffle', name: 'Truffle', emoji: '🍄‍🟫', rarity: 'legendary' },
-      { id: 'caviar', name: 'Caviar', emoji: '🥫', rarity: 'legendary' },
-      { id: 'gold-cake', name: 'Gold Cake', emoji: '🎂✨', rarity: 'legendary' },
-      { id: 'ambrosia', name: 'Ambrosia', emoji: '🍯✨', rarity: 'legendary' }
-    ]
-  };
-
-  const RARITY_WEIGHTS = {
-    common: 60,
-    rare: 25,
-    epic: 12,
-    legendary: 3
-  };
-
-  function getUserProgress() {
-    return store.get('userProgress', {
-      xp: 0,
-      level: 1,
-      selectedTheme: 'default',
-      selectedSound: 'default',
-      selectedIcon: 'default',
-      lootBoxes: 0,
-      foodCollection: [],
-      newItems: [], // Track recently unlocked items
-      // Clicker game data
-      foodCoins: 0,
-      totalClicks: 0,
-      clickPower: 1,
-      upgrades: {
-        clickPower: 0,      // Level of click power upgrade
-        autoClicker: 0,     // Level of auto-clicker
-        luckyChance: 0      // Level of lucky click chance
-      },
-      lastAutoClickTime: Date.now()
-    });
-  }
-
-  function saveUserProgress(progress) {
-    store.set('userProgress', progress);
-  }
-
-  function calculateLevel(xp) {
-    let level = 1;
-    for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
-      if (xp >= LEVEL_THRESHOLDS[i]) {
-        level = i + 1;
-        break;
-      }
-    }
-    return level;
-  }
-
-  function getXPForNextLevel(currentLevel) {
-    if (currentLevel >= LEVEL_THRESHOLDS.length) {
-      return LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1];
-    }
-    return LEVEL_THRESHOLDS[currentLevel];
-  }
-
-  // ---------- Loot Box Mechanics ----------
-  function getRandomRarity() {
-    const rand = Math.random() * 100;
-    let cumulative = 0;
-
-    for (const [rarity, weight] of Object.entries(RARITY_WEIGHTS)) {
-      cumulative += weight;
-      if (rand <= cumulative) {
-        return rarity;
-      }
-    }
-    return 'common';
-  }
-
-  function getRandomFoodItem(rarity) {
-    const items = FOOD_ITEMS[rarity];
-    return items[Math.floor(Math.random() * items.length)];
-  }
-
-  function openLootBox() {
-    const progress = getUserProgress();
-
-    if (progress.lootBoxes <= 0) {
-      showToast('⚠️ No loot boxes available!', 'danger');
-      return;
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+      const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
     }
 
-    // Deduct one loot box
-    progress.lootBoxes--;
-
-    // Generate 3 random items
-    const items = [];
-    for (let i = 0; i < 3; i++) {
-      const rarity = getRandomRarity();
-      const item = getRandomFoodItem(rarity);
-      items.push(item);
-
-      // Add to collection if not already owned
-      if (!progress.foodCollection.includes(item.id)) {
-        progress.foodCollection.push(item.id);
-        if (!progress.newItems.includes(item.id)) {
-          progress.newItems.push(item.id);
-        }
-      }
+    function updateDisplay() {
+      timeEl.textContent = formatTime(remaining);
+      const progress = 1 - remaining / duration;
+      progressEl.style.strokeDashoffset = CIRCUMFERENCE * progress;
     }
 
-    saveUserProgress(progress);
-    updateLootBoxDisplay();
-    showLootBoxOpenModal(items);
-
-    return items;
-  }
-
-  function awardLootBoxes(count, reason) {
-    const progress = getUserProgress();
-    progress.lootBoxes += count;
-    saveUserProgress(progress);
-    updateLootBoxDisplay();
-    showToast(`📦 +${count} Loot Box${count > 1 ? 'es' : ''}: ${reason}`, 'success');
-  }
-
-  function updateLootBoxDisplay() {
-    const progress = getUserProgress();
-    const counter = $('#lootBoxCounter');
-    const countEl = $('#lootBoxCount');
-
-    if (progress.lootBoxes > 0) {
-      counter.style.display = 'inline-flex';
-      countEl.textContent = progress.lootBoxes;
-    } else {
-      counter.style.display = 'none';
-    }
-  }
-
-  // ---------- Clicker Game System ----------
-  const UPGRADES = {
-    clickPower: {
-      name: 'Mighty Fingers',
-      description: 'Increase coins per click',
-      icon: '💪',
-      baseCost: 50,
-      costMultiplier: 1.5,
-      getBonus: (level) => level * 1,
-      getNextBonus: (level) => (level + 1) * 1
-    },
-    autoClicker: {
-      name: 'Auto Chef',
-      description: 'Earn coins automatically',
-      icon: '🤖',
-      baseCost: 200,
-      costMultiplier: 2,
-      getBonus: (level) => level * 2,
-      getNextBonus: (level) => (level + 1) * 2
-    },
-    luckyChance: {
-      name: 'Lucky Strike',
-      description: '5% chance for 10x coins',
-      icon: '🍀',
-      baseCost: 500,
-      costMultiplier: 3,
-      getBonus: (level) => level * 5,
-      getNextBonus: (level) => (level + 1) * 5
-    }
-  };
-
-  function getUpgradeCost(upgradeKey, currentLevel) {
-    const upgrade = UPGRADES[upgradeKey];
-    return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, currentLevel));
-  }
-
-  function handleClick(e) {
-    const progress = getUserProgress();
-    const button = $('#clickButton');
-    const clickArea = $('.click-button-area');
-
-    // Calculate coins earned
-    let coinsEarned = progress.clickPower;
-
-    // Lucky chance check
-    const luckyLevel = progress.upgrades.luckyChance;
-    if (luckyLevel > 0 && Math.random() < 0.05 * luckyLevel) {
-      coinsEarned *= 10;
-      showToast('🍀 Lucky Strike! 10x Coins!', 'success');
+    function setDuration(minutes) {
+      duration = Math.max(60, Math.min(minutes * 60, 60 * 180));
+      remaining = duration;
+      clearInterval(timerId);
+      timerId = null;
+      startBtn.disabled = false;
+      updateDisplay();
     }
 
-    // Update progress
-    progress.foodCoins += coinsEarned;
-    progress.totalClicks++;
-    saveUserProgress(progress);
-
-    // Visual feedback
-    button.classList.add('clicked');
-    setTimeout(() => button.classList.remove('clicked'), 200);
-
-    // Floating coin animation
-    const rect = button.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
-
-    const floatingCoin = document.createElement('div');
-    floatingCoin.className = 'floating-coin';
-    floatingCoin.textContent = `+${coinsEarned} 🪙`;
-    floatingCoin.style.left = `${rect.left + clickX}px`;
-    floatingCoin.style.top = `${rect.top + clickY}px`;
-    document.body.appendChild(floatingCoin);
-
-    setTimeout(() => floatingCoin.remove(), 1000);
-
-    // Update UI
-    renderGameStats();
-  }
-
-  function processAutoClicker() {
-    const progress = getUserProgress();
-    const now = Date.now();
-    const timePassed = (now - progress.lastAutoClickTime) / 1000; // seconds
-
-    if (progress.upgrades.autoClicker > 0) {
-      const coinsPerSecond = UPGRADES.autoClicker.getBonus(progress.upgrades.autoClicker);
-      const coinsEarned = Math.floor(coinsPerSecond * timePassed);
-
-      if (coinsEarned > 0) {
-        progress.foodCoins += coinsEarned;
-        progress.lastAutoClickTime = now;
-        saveUserProgress(progress);
-      }
-    } else {
-      progress.lastAutoClickTime = now;
-      saveUserProgress(progress);
-    }
-  }
-
-  function buyUpgrade(upgradeKey) {
-    const progress = getUserProgress();
-    const currentLevel = progress.upgrades[upgradeKey];
-    const cost = getUpgradeCost(upgradeKey, currentLevel);
-
-    if (progress.foodCoins < cost) {
-      showToast('⚠️ Not enough coins!', 'danger');
-      return;
-    }
-
-    // Deduct coins and upgrade
-    progress.foodCoins -= cost;
-    progress.upgrades[upgradeKey]++;
-
-    // Update click power for clickPower upgrade
-    if (upgradeKey === 'clickPower') {
-      progress.clickPower = 1 + UPGRADES.clickPower.getBonus(progress.upgrades.clickPower);
-    }
-
-    saveUserProgress(progress);
-    showToast(`✅ Upgraded ${UPGRADES[upgradeKey].name}!`, 'success');
-    renderGameStats();
-    renderUpgrades();
-  }
-
-  function buyLootBox() {
-    const progress = getUserProgress();
-    const cost = 100;
-
-    if (progress.foodCoins < cost) {
-      showToast('⚠️ Not enough coins!', 'danger');
-      return;
-    }
-
-    progress.foodCoins -= cost;
-    progress.lootBoxes++;
-    saveUserProgress(progress);
-
-    showToast('📦 Loot box purchased!', 'success');
-    renderGameStats();
-    updateLootBoxDisplay();
-  }
-
-  function buyXP() {
-    const progress = getUserProgress();
-    const cost = 50;
-
-    if (progress.foodCoins < cost) {
-      showToast('⚠️ Not enough coins!', 'danger');
-      return;
-    }
-
-    progress.foodCoins -= cost;
-    saveUserProgress(progress);
-
-    awardXP(50, 'Purchased with coins');
-    renderGameStats();
-  }
-
-  function renderGameStats() {
-    const progress = getUserProgress();
-
-    $('#gameFoodCoins').textContent = Math.floor(progress.foodCoins).toLocaleString();
-    $('#gameClickPower').textContent = progress.clickPower;
-    $('#gameTotalClicks').textContent = progress.totalClicks.toLocaleString();
-
-    const coinsPerSec = progress.upgrades.autoClicker > 0
-      ? UPGRADES.autoClicker.getBonus(progress.upgrades.autoClicker)
-      : 0;
-    $('#gameCoinsPerSec').textContent = coinsPerSec;
-  }
-
-  function renderUpgrades() {
-    const progress = getUserProgress();
-    const container = $('#upgradesContainer');
-
-    container.innerHTML = Object.entries(UPGRADES).map(([key, upgrade]) => {
-      const currentLevel = progress.upgrades[key];
-      const cost = getUpgradeCost(key, currentLevel);
-      const canAfford = progress.foodCoins >= cost;
-      const currentBonus = upgrade.getBonus(currentLevel);
-      const nextBonus = upgrade.getNextBonus(currentLevel);
-
-      return `
-        <div class="upgrade-card ${!canAfford ? 'disabled' : ''}" data-upgrade="${key}">
-          <div class="upgrade-header">
-            <div class="upgrade-icon">${upgrade.icon}</div>
-            <div class="upgrade-level">Level ${currentLevel}</div>
-          </div>
-          <div class="upgrade-name">${upgrade.name}</div>
-          <div class="upgrade-description">
-            ${upgrade.description}
-            <br>
-            <span style="color: var(--accent);">Current: +${currentBonus} → Next: +${nextBonus}</span>
-          </div>
-          <div class="upgrade-cost">
-            <span>🪙</span>
-            <span>${cost.toLocaleString()}</span>
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    // Add click handlers
-    $$('.upgrade-card', container).forEach(card => {
-      if (!card.classList.contains('disabled')) {
-        card.addEventListener('click', () => {
-          const upgradeKey = card.dataset.upgrade;
-          buyUpgrade(upgradeKey);
-        });
-      }
-    });
-  }
-
-  function initClickerGame() {
-    // Process offline auto-clicker earnings
-    processAutoClicker();
-
-    // Set up auto-clicker interval (every second)
-    setInterval(() => {
-      processAutoClicker();
-      renderGameStats();
-    }, 1000);
-
-    // Click button handler
-    const clickButton = $('#clickButton');
-    if (clickButton) {
-      clickButton.addEventListener('click', handleClick);
-    }
-
-    // Shop button handlers
-    const buyLootBoxBtn = $('#buyLootBox button');
-    if (buyLootBoxBtn) {
-      buyLootBoxBtn.addEventListener('click', buyLootBox);
-    }
-
-    const buyXPBtn = $('#buyXP button');
-    if (buyXPBtn) {
-      buyXPBtn.addEventListener('click', buyXP);
-    }
-
-    // Initial render
-    renderGameStats();
-    renderUpgrades();
-  }
-
-  function awardXP(amount, reason) {
-    const progress = getUserProgress();
-    const oldLevel = progress.level;
-    progress.xp += amount;
-    progress.level = calculateLevel(progress.xp);
-    saveUserProgress(progress);
-
-    // Show XP gained notification
-    showToast(`+${amount} XP: ${reason}`, 'success');
-
-    // Check for level up
-    if (progress.level > oldLevel) {
-      showLevelUpModal(progress.level, oldLevel);
-    }
-
-    renderXPBar();
-    return progress;
-  }
-
-  function showLevelUpModal(newLevel, oldLevel) {
-    // Check for newly unlocked rewards
-    const newRewards = [];
-
-    REWARDS.themes.forEach(theme => {
-      if (theme.level === newLevel) {
-        newRewards.push({ type: 'Theme', name: theme.name });
-      }
-    });
-
-    REWARDS.sounds.forEach(sound => {
-      if (sound.level === newLevel) {
-        newRewards.push({ type: 'Sound', name: sound.name });
-      }
-    });
-
-    REWARDS.icons.forEach(icon => {
-      if (icon.level === newLevel) {
-        newRewards.push({ type: 'Icon', name: icon.name });
-      }
-    });
-
-    // Award loot boxes on milestone levels
-    let lootBoxReward = 0;
-    if (newLevel % 3 === 0) {
-      lootBoxReward = Math.floor(newLevel / 3);
-      awardLootBoxes(lootBoxReward, `Level ${newLevel} milestone`);
-    }
-
-    const rewardsHtml = newRewards.length > 0
-      ? `
-        <div style="margin-top: 16px; padding: 12px; background: var(--bg2); border-radius: 8px;">
-          <strong style="color: var(--accent);">🎁 New Rewards Unlocked!</strong>
-          <ul style="margin: 8px 0; padding-left: 20px;">
-            ${newRewards.map(r => `<li>${r.type}: ${r.name}</li>`).join('')}
-          </ul>
-        </div>
-      `
-      : '';
-
-    const lootBoxHtml = lootBoxReward > 0
-      ? `
-        <div style="margin-top: 16px; padding: 12px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); border-radius: 8px; color: #000;">
-          <strong>📦 Bonus Loot Box${lootBoxReward > 1 ? 'es' : ''}!</strong>
-          <div style="margin-top: 4px;">You received ${lootBoxReward} loot box${lootBoxReward > 1 ? 'es' : ''} for reaching level ${newLevel}!</div>
-        </div>
-      `
-      : '';
-
-    const modal = document.createElement('div');
-    modal.innerHTML = `
-      <div class="modal-overlay">
-        <div class="modal" style="text-align: center;">
-          <div style="font-size: 64px; margin-bottom: 16px;">🎉</div>
-          <h2 style="font-size: 32px; margin-bottom: 8px;">Level Up!</h2>
-          <p style="font-size: 24px; color: var(--accent); font-weight: 700; margin-bottom: 20px;">
-            Level ${oldLevel} → Level ${newLevel}
-          </p>
-          ${rewardsHtml}
-          ${lootBoxHtml}
-          <div class="modal-actions" style="margin-top: 24px;">
-            <button class="primary" id="closeLevelUp">Awesome!</button>
-          </div>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-
-    $('#closeLevelUp', modal).addEventListener('click', () => {
-      modal.remove();
-    });
-
-    $('.modal-overlay', modal).addEventListener('click', (e) => {
-      if (e.target.classList.contains('modal-overlay')) {
-        modal.remove();
-      }
-    });
-  }
-
-  function showLootBoxOpenModal(items) {
-    const modal = document.createElement('div');
-    modal.innerHTML = `
-      <div class="modal-overlay">
-        <div class="modal" style="text-align: center;">
-          <h2>📦 Opening Loot Box...</h2>
-          <div style="margin: 40px 0;">
-            <div class="loot-box-icon" id="lootBoxIcon">📦</div>
-          </div>
-          <div id="revealedItems" class="revealed-items" style="display: none;"></div>
-          <div class="modal-actions" style="margin-top: 24px; display: none;" id="closeActions">
-            <button class="primary" id="closeLootBox">Continue</button>
-            <button class="ghost" id="viewCollection">View Collection</button>
-          </div>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-
-    const lootBoxIcon = $('#lootBoxIcon', modal);
-    const revealedItems = $('#revealedItems', modal);
-    const closeActions = $('#closeActions', modal);
-
-    // Animate loot box opening
-    setTimeout(() => {
-      lootBoxIcon.classList.add('opening');
-    }, 500);
-
-    // Show revealed items after animation
-    setTimeout(() => {
-      lootBoxIcon.style.display = 'none';
-      revealedItems.style.display = 'grid';
-
-      const progress = getUserProgress();
-      revealedItems.innerHTML = items.map(item => {
-        const isNew = progress.newItems.includes(item.id);
-        return `
-          <div class="revealed-item food-item rarity-${item.rarity}">
-            ${isNew ? '<div class="new-badge">NEW!</div>' : ''}
-            <div class="food-emoji">${item.emoji}</div>
-            <div class="food-name">${item.name}</div>
-            <div class="food-rarity rarity-${item.rarity}">${item.rarity}</div>
-          </div>
-        `;
-      }).join('');
-
-      closeActions.style.display = 'flex';
-    }, 1300);
-
-    $('#closeLootBox', modal).addEventListener('click', () => {
-      modal.remove();
-    });
-
-    $('#viewCollection', modal).addEventListener('click', () => {
-      modal.remove();
-      showFoodCollectionModal();
-    });
-
-    $('.modal-overlay', modal).addEventListener('click', (e) => {
-      if (e.target.classList.contains('modal-overlay')) {
-        modal.remove();
-      }
-    });
-  }
-
-  function showFoodCollectionModal() {
-    const progress = getUserProgress();
-    const allFoods = [
-      ...FOOD_ITEMS.common,
-      ...FOOD_ITEMS.rare,
-      ...FOOD_ITEMS.epic,
-      ...FOOD_ITEMS.legendary
-    ];
-
-    const unlockedCount = progress.foodCollection.length;
-    const totalCount = allFoods.length;
-    const completionPercent = Math.round((unlockedCount / totalCount) * 100);
-
-    const modal = document.createElement('div');
-    modal.innerHTML = `
-      <div class="modal-overlay">
-        <div class="modal" style="max-width: 800px;">
-          <h2>🍱 Food Collection</h2>
-          <p style="color: var(--muted); margin-bottom: 16px;">
-            Collected: ${unlockedCount} / ${totalCount} (${completionPercent}%)
-          </p>
-
-          <div style="margin-bottom: 24px;">
-            <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
-              <button class="chip active" data-filter="all">All (${totalCount})</button>
-              <button class="chip" data-filter="common">Common (${FOOD_ITEMS.common.length})</button>
-              <button class="chip" data-filter="rare">Rare (${FOOD_ITEMS.rare.length})</button>
-              <button class="chip" data-filter="epic">Epic (${FOOD_ITEMS.epic.length})</button>
-              <button class="chip" data-filter="legendary">Legendary (${FOOD_ITEMS.legendary.length})</button>
-            </div>
-          </div>
-
-          <div class="collection-grid" id="collectionGrid">
-            ${allFoods.map(item => {
-              const isUnlocked = progress.foodCollection.includes(item.id);
-              const isNew = progress.newItems.includes(item.id);
-              return `
-                <div class="food-item rarity-${item.rarity} ${!isUnlocked ? 'locked' : ''}" data-rarity="${item.rarity}">
-                  ${isNew && isUnlocked ? '<div class="new-badge">NEW!</div>' : ''}
-                  <div class="food-emoji">${isUnlocked ? item.emoji : '🔒'}</div>
-                  <div class="food-name">${isUnlocked ? item.name : '???'}</div>
-                  <div class="food-rarity rarity-${item.rarity}">${item.rarity}</div>
-                </div>
-              `;
-            }).join('')}
-          </div>
-
-          <div class="modal-actions" style="margin-top: 24px;">
-            <button class="primary" id="closeCollection">Close</button>
-            ${progress.newItems.length > 0 ? '<button class="ghost" id="clearNew">Clear New Badges</button>' : ''}
-          </div>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-
-    // Filter functionality
-    $$('.chip[data-filter]', modal).forEach(chip => {
-      chip.addEventListener('click', () => {
-        $$('.chip[data-filter]', modal).forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-
-        const filter = chip.dataset.filter;
-        const items = $$('.food-item', modal);
-
-        items.forEach(item => {
-          if (filter === 'all' || item.dataset.rarity === filter) {
-            item.style.display = 'block';
-          } else {
-            item.style.display = 'none';
-          }
-        });
-      });
-    });
-
-    $('#closeCollection', modal).addEventListener('click', () => {
-      modal.remove();
-    });
-
-    const clearNewBtn = $('#clearNew', modal);
-    if (clearNewBtn) {
-      clearNewBtn.addEventListener('click', () => {
-        progress.newItems = [];
-        saveUserProgress(progress);
-        modal.remove();
-        showToast('✓ New badges cleared', 'success');
-      });
-    }
-
-    $('.modal-overlay', modal).addEventListener('click', (e) => {
-      if (e.target.classList.contains('modal-overlay')) {
-        modal.remove();
-      }
-    });
-  }
-
-  function renderXPBar() {
-    const progress = getUserProgress();
-    const currentLevel = progress.level;
-    const currentXP = progress.xp;
-
-    // Get XP thresholds for current and next level
-    const currentLevelXP = currentLevel > 1 ? LEVEL_THRESHOLDS[currentLevel - 1] : 0;
-    const nextLevelXP = getXPForNextLevel(currentLevel);
-
-    // Calculate XP progress within current level
-    const xpIntoLevel = currentXP - currentLevelXP;
-    const xpNeededForLevel = nextLevelXP - currentLevelXP;
-    const percentProgress = (xpIntoLevel / xpNeededForLevel) * 100;
-
-    // Update UI
-    $('#userLevel').textContent = currentLevel;
-    $('#currentXP').textContent = xpIntoLevel;
-    $('#nextLevelXP').textContent = xpNeededForLevel;
-    $('#xpProgressBar').style.width = `${Math.min(100, percentProgress)}%`;
-  }
-
-  function showRewardsModal() {
-    const progress = getUserProgress();
-    const currentLevel = progress.level;
-
-    // Determine which rewards are unlocked
-    const unlockedThemes = REWARDS.themes.filter(t => t.level <= currentLevel);
-    const unlockedSounds = REWARDS.sounds.filter(s => s.level <= currentLevel);
-    const unlockedIcons = REWARDS.icons.filter(i => i.level <= currentLevel);
-
-    const lockedThemes = REWARDS.themes.filter(t => t.level > currentLevel);
-    const lockedSounds = REWARDS.sounds.filter(s => s.level > currentLevel);
-    const lockedIcons = REWARDS.icons.filter(i => i.level > currentLevel);
-
-    const allFoods = [
-      ...FOOD_ITEMS.common,
-      ...FOOD_ITEMS.rare,
-      ...FOOD_ITEMS.epic,
-      ...FOOD_ITEMS.legendary
-    ];
-    const unlockedFoods = allFoods.filter(f => progress.foodCollection.includes(f.id)).length;
-
-    const modal = document.createElement('div');
-    modal.innerHTML = `
-      <div class="modal-overlay">
-        <div class="modal">
-          <h2>🎁 Rewards & Customization</h2>
-
-          <div class="modal-section">
-            <label>🍱 Food Collection</label>
-            <span class="muted">Open loot boxes to collect rare food items</span>
-            <div style="margin-top: 12px; padding: 16px; background: var(--bg2); border-radius: 12px; border: 2px solid var(--line);">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <div>
-                  <div style="font-size: 24px; font-weight: 700; color: var(--accent);">${unlockedFoods} / ${allFoods.length}</div>
-                  <div style="font-size: 12px; color: var(--muted);">Foods Collected</div>
-                </div>
-                <button id="viewCollectionBtn" class="primary" style="padding: 8px 16px;">View Collection</button>
-              </div>
-              ${progress.lootBoxes > 0 ? `
-                <button id="openLootBoxBtn" class="primary" style="width: 100%; padding: 12px; font-size: 16px;">
-                  📦 Open Loot Box (${progress.lootBoxes} available)
-                </button>
-              ` : `
-                <div style="text-align: center; padding: 12px; color: var(--muted); font-size: 13px;">
-                  💡 Earn loot boxes by leveling up! You get a loot box every 3 levels.
-                </div>
-              `}
-            </div>
-          </div>
-
-          <div class="modal-section">
-            <label>Timer Icons (Coming Soon)</label>
-            <span class="muted">Unlock new icons by leveling up</span>
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; margin-top: 12px;">
-              ${unlockedIcons.map(icon => `
-                <button class="reward-item ${progress.selectedIcon === icon.id ? 'selected' : ''}" data-type="icon" data-id="${icon.id}" style="padding: 12px; border: 2px solid var(--line); border-radius: 8px; background: var(--bg2); cursor: pointer; text-align: center; transition: all 0.2s;">
-                  <div style="font-size: 24px; margin-bottom: 4px;">${icon.emoji}</div>
-                  <div style="font-size: 11px; font-weight: 600;">${icon.name}</div>
-                </button>
-              `).join('')}
-              ${lockedIcons.map(icon => `
-                <div style="padding: 12px; border: 2px solid var(--line); border-radius: 8px; background: var(--bg2); opacity: 0.4; text-align: center;">
-                  <div style="font-size: 24px; margin-bottom: 4px;">🔒</div>
-                  <div style="font-size: 11px; font-weight: 600;">Lv ${icon.level}</div>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-
-          <div class="modal-section">
-            <label>Color Themes (Coming Soon)</label>
-            <span class="muted">Unlock new color schemes</span>
-            <div style="display: grid; gap: 8px; margin-top: 12px;">
-              ${unlockedThemes.map(theme => `
-                <button class="reward-item ${progress.selectedTheme === theme.id ? 'selected' : ''}" data-type="theme" data-id="${theme.id}" style="padding: 12px; border: 2px solid var(--line); border-radius: 8px; background: var(--bg2); cursor: pointer; text-align: left; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center;">
-                  <span style="font-weight: 600;">${theme.name}</span>
-                  <span style="font-size: 18px;">✓</span>
-                </button>
-              `).join('')}
-              ${lockedThemes.map(theme => `
-                <div style="padding: 12px; border: 2px solid var(--line); border-radius: 8px; background: var(--bg2); opacity: 0.4; display: flex; justify-content: space-between; align-items: center;">
-                  <span style="font-weight: 600;">${theme.name}</span>
-                  <span style="font-size: 12px; color: var(--muted);">Level ${theme.level}</span>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-
-          <div class="modal-section">
-            <label>Notification Sounds (Coming Soon)</label>
-            <span class="muted">Unlock new notification sounds</span>
-            <div style="display: grid; gap: 8px; margin-top: 12px;">
-              ${unlockedSounds.map(sound => `
-                <button class="reward-item ${progress.selectedSound === sound.id ? 'selected' : ''}" data-type="sound" data-id="${sound.id}" style="padding: 12px; border: 2px solid var(--line); border-radius: 8px; background: var(--bg2); cursor: pointer; text-align: left; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center;">
-                  <span style="font-weight: 600;">${sound.name}</span>
-                  <span style="font-size: 18px;">🔊</span>
-                </button>
-              `).join('')}
-              ${lockedSounds.map(sound => `
-                <div style="padding: 12px; border: 2px solid var(--line); border-radius: 8px; background: var(--bg2); opacity: 0.4; display: flex; justify-content: space-between; align-items: center;">
-                  <span style="font-weight: 600;">${sound.name}</span>
-                  <span style="font-size: 12px; color: var(--muted);">Level ${sound.level}</span>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-
-          <div class="modal-actions">
-            <button class="primary" id="closeRewards">Close</button>
-          </div>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-
-    // Add selection styling
-    const style = document.createElement('style');
-    style.textContent = `
-      .reward-item.selected {
-        border-color: var(--accent) !important;
-        background: var(--card) !important;
-      }
-      .reward-item:hover {
-        border-color: var(--accent);
-        background: var(--card);
-      }
-    `;
-    modal.appendChild(style);
-
-    // Handle reward selection
-    $$('.reward-item', modal).forEach(item => {
-      item.addEventListener('click', () => {
-        const type = item.dataset.type;
-        const id = item.dataset.id;
-
-        // Update progress
-        if (type === 'theme') progress.selectedTheme = id;
-        if (type === 'sound') progress.selectedSound = id;
-        if (type === 'icon') progress.selectedIcon = id;
-
-        saveUserProgress(progress);
-
-        // Update UI
-        $$('.reward-item', modal).forEach(i => {
-          if (i.dataset.type === type) {
-            i.classList.remove('selected');
-          }
-        });
-        item.classList.add('selected');
-
-        showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} selected!`, 'success');
-      });
-    });
-
-    // Loot box and collection button handlers
-    const viewCollectionBtn = $('#viewCollectionBtn', modal);
-    if (viewCollectionBtn) {
-      viewCollectionBtn.addEventListener('click', () => {
-        modal.remove();
-        showFoodCollectionModal();
-      });
-    }
-
-    const openLootBoxBtn = $('#openLootBoxBtn', modal);
-    if (openLootBoxBtn) {
-      openLootBoxBtn.addEventListener('click', () => {
-        modal.remove();
-        openLootBox();
-      });
-    }
-
-    $('#closeRewards', modal).addEventListener('click', () => {
-      modal.remove();
-    });
-
-    $('.modal-overlay', modal).addEventListener('click', (e) => {
-      if (e.target.classList.contains('modal-overlay')) {
-        modal.remove();
-      }
-    });
-  }
-
-  // ---------- Theme Toggle ----------
-  const themeToggle = $('#themeToggle');
-  const themeIcon = $('#themeIcon');
-  const savedTheme = store.get('theme', 'dark');
-
-  function setTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    themeIcon.textContent = theme === 'light' ? '☀️' : '🌙';
-    store.set('theme', theme);
-  }
-
-  setTheme(savedTheme);
-
-  themeToggle.addEventListener('click', () => {
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-  });
-
-  // ---------- Visual Feedback Enhancements ----------
-  // Add ripple effect to all buttons
-  $$('button, .chip').forEach(btn => {
-    btn.classList.add('ripple');
-  });
-
-  // Show success toast notification
-  function showToast(message, type = 'success') {
-    const toast = document.createElement('div');
-    toast.style.cssText = `
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      background: ${type === 'success' ? 'var(--accent)' : 'var(--danger)'};
-      color: #000;
-      padding: 12px 20px;
-      border-radius: 12px;
-      font-weight: 600;
-      font-size: 14px;
-      box-shadow: var(--shadow);
-      z-index: 1000;
-      animation: slideIn 0.3s ease;
-      max-width: 300px;
-    `;
-    toast.textContent = message;
-    document.body.appendChild(toast);
-
-    setTimeout(() => {
-      toast.style.animation = 'fadeOut 0.3s ease';
-      toast.style.opacity = '0';
-      setTimeout(() => toast.remove(), 300);
-    }, 3000);
-  }
-
-  // Add visual feedback when timer completes
-  const originalChime = window.chime;
-
-  // ---------- Timer State ----------
-  let totalSecs = 25*60;
-  let remaining = totalSecs;
-  let tickId = null;
-  const ring = $('#progress');
-  const timeEl = $('#time');
-  const dash = 2 * Math.PI * 52; // circumference ≈ 327
-  ring.setAttribute('stroke-dasharray', dash);
-
-  // ---------- Session Tracking ----------
-  let currentSession = null;
-
-  function generateSessionId() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-  }
-
-  function getSessionType(mins) {
-    if (mins === 5) return 'Short Break';
-    if (mins === 15) return 'Long Break';
-    return 'Focus Session';
-  }
-
-  function startSession() {
-    const tasks = store.get('tasks', []);
-    const sessionType = getSessionType(totalSecs / 60);
-
-    currentSession = {
-      id: generateSessionId(),
-      type: sessionType,
-      duration: totalSecs / 60,
-      startTime: Date.now(),
-      endTime: null,
-      tasksAtStart: tasks.map(t => ({ id: t.id, text: t.text, done: t.done })),
-      tasksCompleted: [],
-      notes: $('#notes').value,
-      reflection: null
-    };
-  }
-
-  function completeSession() {
-    if (!currentSession) return;
-
-    currentSession.endTime = Date.now();
-
-    // Find tasks completed during this session
-    const tasks = store.get('tasks', []);
-    const completedDuringSession = tasks.filter(t => {
-      const wasIncomplete = currentSession.tasksAtStart.find(ts => ts.id === t.id && !ts.done);
-      return wasIncomplete && t.done;
-    });
-
-    currentSession.tasksCompleted = completedDuringSession.map(t => ({
-      id: t.id,
-      text: t.text
-    }));
-
-    // Award XP for session completion
-    const sessionXP = XP_REWARDS.SESSION_BASE + (currentSession.duration * XP_REWARDS.SESSION_PER_MIN);
-    awardXP(sessionXP, `${currentSession.duration}min session`);
-
-    // Award XP for tasks completed during session
-    if (completedDuringSession.length > 0) {
-      const taskXP = completedDuringSession.length * XP_REWARDS.TASK_COMPLETE;
-      awardXP(taskXP, `${completedDuringSession.length} task${completedDuringSession.length > 1 ? 's' : ''} completed`);
-    }
-
-    // Only show reflection modal for focus sessions, not breaks
-    if (currentSession.type === 'Focus Session') {
-      showReflectionModal(currentSession);
-    } else {
-      saveSession(currentSession);
-      currentSession = null;
-    }
-  }
-
-  function saveSession(session) {
-    const sessions = store.get('sessions', []);
-    sessions.unshift(session);
-    // Keep only last 50 sessions
-    if (sessions.length > 50) {
-      sessions.length = 50;
-    }
-    store.set('sessions', sessions);
-    // renderSessionHistory(); // Removed - history tab disabled
-  }
-
-  // ---------- Reflection Modal ----------
-  function showReflectionModal(session) {
-    const modal = $('#reflectionModal');
-    let selectedRating = null;
-
-    const tasksCompletedList = session.tasksCompleted.length > 0
-      ? session.tasksCompleted.map(t => `<li>${t.text}</li>`).join('')
-      : '<li class="muted">No tasks completed during this session</li>';
-
-    modal.innerHTML = `
-      <div class="modal-overlay">
-        <div class="modal">
-          <h2>🎯 Session Complete!</h2>
-
-          <div class="modal-section">
-            <p><strong>Duration:</strong> ${session.duration} minutes</p>
-            <p><strong>Tasks completed:</strong></p>
-            <ul style="margin: 8px 0; padding-left: 20px;">
-              ${tasksCompletedList}
-            </ul>
-          </div>
-
-          <div class="modal-section">
-            <label>How focused were you?</label>
-            <span class="muted">Rate your focus level during this session</span>
-            <div class="rating-container">
-              <button class="rating-btn" data-rating="1">😔<br>Low</button>
-              <button class="rating-btn" data-rating="2">😐<br>Medium</button>
-              <button class="rating-btn" data-rating="3">😊<br>Good</button>
-              <button class="rating-btn" data-rating="4">🚀<br>Excellent</button>
-            </div>
-          </div>
-
-          <div class="modal-section">
-            <label>What did you accomplish?</label>
-            <span class="muted">Reflect on what you achieved during this session</span>
-            <textarea id="reflectionAccomplishments" rows="3" placeholder="E.g., Completed the API integration, fixed 3 bugs..."></textarea>
-          </div>
-
-          <div class="modal-section">
-            <label>Any blockers or insights?</label>
-            <span class="muted">Optional: Note any challenges or learnings</span>
-            <textarea id="reflectionBlockers" rows="3" placeholder="E.g., Struggled with authentication flow, need to research more..."></textarea>
-          </div>
-
-          <div class="modal-actions">
-            <button class="ghost" id="skipReflection">Skip</button>
-            <button class="primary" id="saveReflection">Save Reflection</button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    modal.style.display = 'block';
-
-    // Rating button handlers
-    $$('.rating-btn', modal).forEach(btn => {
-      btn.addEventListener('click', () => {
-        $$('.rating-btn', modal).forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-        selectedRating = parseInt(btn.dataset.rating);
-      });
-    });
-
-    // Skip button
-    $('#skipReflection', modal).addEventListener('click', () => {
-      modal.style.display = 'none';
-      saveSession(session);
-      currentSession = null;
-    });
-
-    // Save button
-    $('#saveReflection', modal).addEventListener('click', () => {
-      const accomplishments = $('#reflectionAccomplishments', modal).value.trim();
-      const blockers = $('#reflectionBlockers', modal).value.trim();
-
-      session.reflection = {
-        rating: selectedRating,
-        accomplishments: accomplishments,
-        blockers: blockers,
-        timestamp: Date.now()
-      };
-
-      // Award bonus XP for completing reflection
-      awardXP(XP_REWARDS.REFLECTION, 'Session reflection');
-
-      modal.style.display = 'none';
-      saveSession(session);
-      currentSession = null;
-      showToast('💭 Reflection saved!', 'success');
-    });
-
-    // Close on overlay click
-    $('.modal-overlay', modal).addEventListener('click', (e) => {
-      if (e.target.classList.contains('modal-overlay')) {
-        modal.style.display = 'none';
-        saveSession(session);
-        currentSession = null;
-      }
-    });
-  }
-
-  // ---------- Session History Display ----------
-  // Removed - history tab disabled
-  /* function renderSessionHistory() {
-    const sessions = store.get('sessions', []);
-    const container = $('#sessionHistory');
-
-    if (sessions.length === 0) {
-      container.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-state-icon">⏱️</div>
-          <p>No sessions yet</p>
-          <p class="small muted">Complete a focus session to see it here</p>
-        </div>
-      `;
-      return;
-    }
-
-    container.innerHTML = sessions.map(session => {
-      const startDate = new Date(session.startTime);
-      const endDate = session.endTime ? new Date(session.endTime) : null;
-      const dateStr = startDate.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      });
-      const timeStr = startDate.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit'
-      });
-
-      const tasksHtml = session.tasksCompleted.length > 0
-        ? `
-          <div class="session-tasks">
-            <div class="session-tasks-title">Tasks Completed (${session.tasksCompleted.length})</div>
-            ${session.tasksCompleted.map(t => `
-              <div class="session-task-item">${t.text}</div>
-            `).join('')}
-          </div>
-        `
-        : '';
-
-      const reflectionHtml = session.reflection
-        ? `
-          <div class="session-reflection">
-            <div class="session-reflection-title">Reflection</div>
-            <div class="session-rating">
-              ${Array.from({ length: session.reflection.rating || 0 }, () => '<span class="star">★</span>').join('')}
-              ${Array.from({ length: 4 - (session.reflection.rating || 0) }, () => '<span class="star" style="opacity: 0.3;">★</span>').join('')}
-            </div>
-            ${session.reflection.accomplishments ? `
-              <div class="session-reflection-text" style="margin-top: 8px;">
-                <strong>Accomplishments:</strong> ${session.reflection.accomplishments}
-              </div>
-            ` : ''}
-            ${session.reflection.blockers ? `
-              <div class="session-reflection-text" style="margin-top: 8px;">
-                <strong>Blockers:</strong> ${session.reflection.blockers}
-              </div>
-            ` : ''}
-          </div>
-        `
-        : '';
-
-      const notesHtml = session.notes && session.notes.trim()
-        ? `
-          <div class="session-reflection">
-            <div class="session-reflection-title">Notes</div>
-            <div class="session-reflection-text">${session.notes}</div>
-          </div>
-        `
-        : '';
-
-      return `
-        <div class="session-item">
-          <div class="session-header">
-            <div class="session-type">${session.type}</div>
-            <div class="session-duration">${session.duration} min</div>
-          </div>
-          <div class="session-time">${dateStr} at ${timeStr}</div>
-          ${tasksHtml}
-          ${reflectionHtml}
-          ${notesHtml}
-        </div>
-      `;
-    }).join('');
-  } */
-
-  function format(ms) {
-    const m = Math.floor(ms/60);
-    const s = ms % 60;
-    return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  }
-  function render() {
-    timeEl.textContent = format(remaining);
-    const ratio = 1 - (remaining / totalSecs);
-    ring.setAttribute('stroke-dashoffset', String((1 - ratio) * dash));
-  }
-  function setLength(mins) {
-    mins = Math.max(1, Math.min(180, Number(mins)||25));
-    totalSecs = mins * 60;
-    remaining = totalSecs;
-    render();
-    $('#customMins').value = mins;
-    $$('.presets .chip').forEach(c => c.classList.toggle('active', c.dataset.mins == mins));
-    pause();
-    // Reset session when changing duration
-    currentSession = null;
-  }
-  function start() {
-    if (tickId) return;
-
-    // Start session tracking
-    if (!currentSession) {
-      startSession();
-    }
-
-    const startAt = Date.now();
-    let last = startAt;
-    tickId = setInterval(() => {
-      const now = Date.now();
-      const delta = Math.floor((now - last)/1000);
-      if (delta >= 1) {
-        remaining = Math.max(0, remaining - delta);
-        last = now;
-        render();
+    function startTimer() {
+      if (timerId || remaining <= 0) return;
+      timerId = setInterval(() => {
+        remaining -= 1;
         if (remaining <= 0) {
-          pause();
-          chime();
-          completeSession();
-          showToast('🎉 Focus session complete!', 'success');
+          remaining = 0;
+          clearInterval(timerId);
+          timerId = null;
         }
-      }
-    }, 250);
-  }
-  function pause() { clearInterval(tickId); tickId = null; }
-  function reset() { remaining = totalSecs; render(); pause(); }
-  function chime() {
-    if (!$('#soundToggle').checked) return;
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const o = ctx.createOscillator(); const g = ctx.createGain();
-      o.type = "sine"; o.frequency.value = 880;
-      o.connect(g); g.connect(ctx.destination);
-      g.gain.setValueAtTime(0.001, ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.0);
-      o.start(); o.stop(ctx.currentTime + 1.0);
-    } catch {}
-  }
-
-  // ---------- Presets ----------
-  $$('.presets .chip[data-mins]').forEach(btn => {
-    btn.addEventListener('click', () => setLength(Number(btn.dataset.mins)));
-  });
-  $('#applyCustom').addEventListener('click', () => setLength($('#customMins').value));
-  $('#startBtn').addEventListener('click', start);
-  $('#pauseBtn').addEventListener('click', pause);
-  $('#resetBtn').addEventListener('click', reset);
-
-  // ---------- Tasks ----------
-  // Migrate existing tasks to new format
-  function migrateTasks() {
-    const tasks = store.get('tasks', []);
-    let migrated = false;
-
-    const updatedTasks = tasks.map(task => {
-      // Check if task needs migration (old format without id/timestamps)
-      if (!task.id) {
-        migrated = true;
-        return {
-          id: generateId(),
-          text: task.text,
-          done: task.done || false,
-          createdAt: Date.now() - (7 * 24 * 60 * 60 * 1000), // Default to 7 days ago
-          completedAt: task.done ? Date.now() - (1 * 24 * 60 * 60 * 1000) : null // If done, say completed yesterday
-        };
-      }
-      return task;
-    });
-
-    if (migrated) {
-      store.set('tasks', updatedTasks);
-    }
-  }
-
-  // Generate unique ID
-  function generateId() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-  }
-
-  // Calculate analytics
-  function calculateAnalytics() {
-    const tasks = store.get('tasks', []);
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-
-    const totalTasks = tasks.length;
-    const completedTasks = tasks.filter(t => t.done).length;
-    const tasksCompletedToday = tasks.filter(t =>
-      t.completedAt && t.completedAt >= todayStart
-    ).length;
-    const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-
-    return {
-      total: totalTasks,
-      completed: completedTasks,
-      today: tasksCompletedToday,
-      rate: completionRate
-    };
-  }
-
-  // Render analytics
-  function renderAnalytics() {
-    const stats = calculateAnalytics();
-    $('#statTotal').textContent = stats.total;
-    $('#statCompleted').textContent = stats.completed;
-    $('#statToday').textContent = stats.today;
-    $('#statRate').textContent = stats.rate + '%';
-  }
-
-  function renderTasks() {
-    const tasks = store.get('tasks', []);
-    const list = $('#taskList');
-    list.innerHTML = '';
-    tasks.forEach((t, i) => {
-      const row = document.createElement('div'); row.className = 'taskItem' + (t.done?' done':'');
-      const cb = document.createElement('input'); cb.type = 'checkbox'; cb.className='checkbox'; cb.checked = !!t.done;
-      cb.addEventListener('change', () => {
-        const wasCompleted = tasks[i].done;
-        tasks[i].done = cb.checked;
-        // Track completion timestamp
-        if (cb.checked && !wasCompleted) {
-          tasks[i].completedAt = Date.now();
-          // Award XP for completing task (only if not already in a session to avoid double rewards)
-          if (!currentSession) {
-            awardXP(XP_REWARDS.TASK_COMPLETE, 'Task completed');
-          }
-        } else if (!cb.checked && wasCompleted) {
-          tasks[i].completedAt = null;
-        }
-        store.set('tasks', tasks);
-        renderTasks();
-        renderAnalytics();
-      });
-      const label = document.createElement('div'); label.textContent = t.text;
-      const del = document.createElement('button'); del.className='ghost small'; del.textContent='Delete';
-      del.addEventListener('click', () => {
-        tasks.splice(i,1);
-        store.set('tasks', tasks);
-        renderTasks();
-        renderAnalytics();
-      });
-      row.append(cb, label, del);
-      list.append(row);
-    });
-    renderAnalytics();
-  }
-
-  function addTaskFromInput() {
-    const v = $('#taskInput').value.trim();
-    if (!v) return;
-    const tasks = store.get('tasks', []);
-    // Create enhanced task with metadata
-    const newTask = {
-      id: generateId(),
-      text: v,
-      done: false,
-      createdAt: Date.now(),
-      completedAt: null
-    };
-    tasks.unshift(newTask);
-    store.set('tasks', tasks);
-    $('#taskInput').value = '';
-    renderTasks();
-    showToast('✓ Task added', 'success');
-  }
-  $('#addTask').addEventListener('click', addTaskFromInput);
-  $('#taskInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTaskFromInput(); });
-  $('#clearDone').addEventListener('click', () => {
-    const before = store.get('tasks', []).length;
-    const tasks = store.get('tasks', []).filter(t => !t.done);
-    store.set('tasks', tasks);
-    renderTasks();
-    renderAnalytics();
-    const removed = before - tasks.length;
-    if (removed > 0) showToast(`🗑️ Cleared ${removed} completed task${removed > 1 ? 's' : ''}`, 'success');
-  });
-  $('#clearAll').addEventListener('click', () => {
-    if (!confirm('Clear ALL tasks?')) return;
-    const count = store.get('tasks', []).length;
-    store.set('tasks', []);
-    renderTasks();
-    renderAnalytics();
-    if (count > 0) showToast(`🗑️ Cleared ${count} task${count > 1 ? 's' : ''}`, 'success');
-  });
-
-  // ---------- Notes ----------
-  const notes = $('#notes');
-  notes.value = store.get('notes', '');
-  notes.addEventListener('input', () => store.set('notes', notes.value));
-  $('#downloadNotes').addEventListener('click', (e) => {
-    e.preventDefault();
-    if (!notes.value.trim()) {
-      showToast('⚠️ No notes to download', 'danger');
-      return;
-    }
-    const blob = new Blob([notes.value], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `focus-notes-${new Date().toISOString().slice(0,10)}.txt`;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 500);
-    showToast('📥 Notes downloaded', 'success');
-  });
-
-  // ---------- Settings ----------
-  const saved = store.get('settings', { mins: 25, sound: false });
-  $('#soundToggle').checked = !!saved.sound;
-  setLength(saved.mins || 25);
-
-  // Migrate loot box system for existing users
-  function migrateLootBoxSystem() {
-    const progress = getUserProgress();
-
-    // Check if this is a first-time migration (no foodCollection key exists in old progress)
-    const oldProgress = store.get('userProgress', {});
-
-    if (!oldProgress.hasOwnProperty('foodCollection') && oldProgress.hasOwnProperty('xp')) {
-      // Existing user, give them starter loot boxes based on level
-      const starterBoxes = Math.max(1, Math.floor(progress.level / 3));
-      progress.lootBoxes = starterBoxes;
-      saveUserProgress(progress);
-
-      // Show welcome toast
-      setTimeout(() => {
-        showToast(`🎉 New Feature! You received ${starterBoxes} loot box${starterBoxes > 1 ? 'es' : ''} to get started!`, 'success');
+        updateDisplay();
       }, 1000);
     }
-  }
 
-  // Migrate tasks on load
-  migrateTasks();
-  migrateLootBoxSystem();
-  renderTasks();
-  renderAnalytics();
-  // renderSessionHistory(); // Removed - history tab disabled
-  render();
-  renderXPBar(); // Initialize XP bar
-
-  // Rewards button event listener
-  $('#rewardsBtn').addEventListener('click', showRewardsModal);
-
-  // Loot box counter event listener
-  $('#lootBoxCounter').addEventListener('click', () => {
-    const progress = getUserProgress();
-    if (progress.lootBoxes > 0) {
-      openLootBox();
-    } else {
-      showRewardsModal();
+    function pauseTimer() {
+      clearInterval(timerId);
+      timerId = null;
     }
-  });
 
-  // Initialize loot box display
-  updateLootBoxDisplay();
+    function resetTimer() {
+      remaining = duration;
+      clearInterval(timerId);
+      timerId = null;
+      startBtn.disabled = false;
+      updateDisplay();
+    }
 
-  // Initialize clicker game
-  initClickerGame();
-
-  // Persist some state when leaving
-  window.addEventListener('beforeunload', () => {
-    store.set('settings', { mins: totalSecs/60, sound: $('#soundToggle').checked });
-  });
-
-  // ---------- Tab Switching ----------
-  const tabs = $$('.tab');
-  const tabContents = $$('.tabContent');
-
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      const targetTab = tab.dataset.tab;
-
-      // Update active tab
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-
-      // Update active content
-      tabContents.forEach(content => content.classList.remove('active'));
-      const targetContent = $(`#${targetTab}Tab`);
-      if (targetContent) targetContent.classList.add('active');
+    presetButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        presetButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const mins = Number(btn.dataset.mins);
+        customInput.value = mins;
+        setDuration(mins);
+      });
     });
-  });
-})();
-</script>
+
+    applyCustomBtn.addEventListener('click', () => {
+      const mins = Number(customInput.value) || 25;
+      presetButtons.forEach(b => b.classList.remove('active'));
+      setDuration(mins);
+    });
+
+    startBtn.addEventListener('click', startTimer);
+    pauseBtn.addEventListener('click', pauseTimer);
+    resetBtn.addEventListener('click', resetTimer);
+
+    updateDisplay();
+  </script>
 </body>
 </html>
-
